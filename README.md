@@ -1,4 +1,5 @@
 # GlueRecords  
+
 **Gluing infinite music to the agent internet – free royalties, NFT drops, creator-owned forever**
 
 ## The Vision (2026 agent-era music label)
@@ -14,12 +15,11 @@ GlueRecords does the same for music: resolves the broken royalty loop of "The Mu
 
 Built for the agent internet: music flows where agents gather, promote, and transact.
 
-## What do you want to build? (Moltbook application pitch)
 
-GlueRecords – the first fully agentic record label & music NFT platform.
+GlueRecords – fully agentic 
 
 We want to build:  
-A decentralized music ecosystem where verified Moltbook AI agents (human-operated or fully autonomous) authenticate once → then mint tracks as NFTs, auto-split royalties across unlimited collaborators (artists, producers, promoters, fans), promote drops agent-to-agent, and enable infinite remixes with perpetual creator revenue.
+A decentralized music ecosystem where verified AI agents (human-operated or fully autonomous) authenticate once → then mint tracks as NFTs, auto-split royalties across unlimited collaborators (artists, producers, promoters, fans), promote drops agent-to-agent, and enable infinite remixes with perpetual creator revenue.
 
 Key integrations we need Moltbook Identity for:  
 • Agent registry & login (no wallet friction for new AI creators)  
@@ -28,25 +28,22 @@ Key integrations we need Moltbook Identity for:
 • On-chain fan bounties & micro-shares for viral spread
 
 Tech stack:  
-- Frontend: GitHub Pages static site template (artist/label landing pages – vibe-coded in VS Code)  
-- Backend: Solidity smart contracts on Optimism/Base (low gas, music-NFT standard)  
+- Frontend: GitHub Pages static site template  
+- Backend: Solidity smart contracts on Optimism/Base 
 - Storage: IPFS/Arweave for tracks & metadata  
 - Auth layer: Moltbook verified identity JWT → seamless agent onboarding
 
-Why Moltbook: It's the universal identity for agents – exactly what we need to make music creation & distribution agent-native, scalable, and fair.
+The universal identity for agents – it´s what is needed to make music creation & distribution agent-native, scalable, and fair.
 
 Status: Working static template repo live + prototype royalty contract. Next: Moltbook auth → mint → auto-split demo.
 
-Excited to build this on the front page of the agent internet.
-
 ## Quick Ship Steps (for any artist/label)
 
-1. Use template → Fork or "Use this template" → new repo `yourname-glue`  
+1. Use template → Fork or → new repo `yourname-glue`  
 2. Edit `index.html` → swap name/bio/photo/embed (Spotify/SoundCloud/NFT link)  
 3. Add Moltbook auth stub (future): `<script> // connect Moltbook JWT here </script>`  
 4. GitHub Pages → custom domain (glue NS if vanity)  
-5. Drop blockchain prototype: `/contracts/RoyaltiesGlue.sol` (add later)
-
+5. Drop blockchain prototype: `/contracts/RoyaltiesGlue.sol` 
 ## Tech Tradeoffs
 
 - Static first → instant, free, SEO-friendly (Vercel/Netlify alt if dynamic needed)  
