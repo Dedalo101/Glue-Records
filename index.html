@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlueRecords</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan: #00ffe0;
+  --bg: #030308;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  background: var(--bg);
+  overflow-x: hidden;
+  font-family: 'Share Tech Mono', monospace;
+  cursor: crosshair;
+}
+
+/* ── FRACTAL BG ── */
+#bg-canvas {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative; z-index: 10;
+  text-align: center;
+  padding: clamp(48px, 8vw, 100px) 20px clamp(20px, 3vw, 40px);
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(8px, 1.1vw, 12px);
+  letter-spacing: .6em;
+  color: rgba(0,255,224,.3);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.hero-title {
+  font-family: 'Special Elite', serif;
+  font-size: clamp(52px, 11vw, 148px);
+  line-height: .92;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  /* chromatic split */
+  text-shadow:
+    -3px 0 0 rgba(255,0,80,.35),
+     3px 0 0 rgba(0,255,224,.25),
+     0 0 80px rgba(0,255,224,.08);
+  position: relative;
+}
+
+/* glitch flicker on title */
+@keyframes titleGlitch {
+  0%,94%,100% { clip-path: none; transform: none; }
+  95% { clip-path: inset(30% 0 40% 0); transform: translate(-4px,0); }
+  96% { clip-path: inset(60% 0 10% 0); transform: translate(4px,0); }
+  97% { clip-path: none; transform: none; }
+  98% { clip-path: inset(10% 0 80% 0); transform: translate(-2px,0); }
+}
+.hero-title { animation: titleGlitch 7s infinite; }
+
+.hero-rule {
+  width: clamp(40px, 10vw, 120px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  margin: 18px auto;
+  opacity: .35;
+}
+
+.hero-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(8px, 1.1vw, 11px);
+  letter-spacing: .45em;
+  color: rgba(255,255,255,.2);
+  text-transform: uppercase;
+}
+
+/* ── GRID ── */
+.grid {
+  position: relative; z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: rgba(0,255,224,.06);
+  padding: 1px;
+  margin: 0 clamp(8px,1.5vw,20px);
+  margin-bottom: 0;
+}
+
+.tile {
+  position: relative;
+  height: clamp(260px, 42vh, 520px);
+  overflow: hidden;
+  background: var(--bg);
+  cursor: crosshair;
+}
+
+/* canvas fills tile */
+.tile > canvas {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+}
+
+/* scanlines overlay */
+.tile::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 5;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent, transparent 2px,
+    rgba(0,0,0,.18) 2px, rgba(0,0,0,.18) 3px
+  );
+}
+
+/* artist name + label */
+.tile-info {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tile-name {
+  font-family: 'Special Elite', serif;
+  font-size: clamp(22px, 3.5vw, 52px);
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  text-align: center;
+  line-height: 1;
+  /* subtle drop so it reads over canvas */
+  text-shadow:
+    0 0 30px rgba(0,0,0,.9),
+    0 0 60px rgba(0,0,0,.7),
+    2px 2px 0 rgba(0,0,0,.8);
+  mix-blend-mode: normal;
+}
+
+.tile-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: clamp(7px, .9vw, 10px);
+  letter-spacing: .35em;
+  color: rgba(255,255,255,.35);
+  text-transform: uppercase;
+  margin-top: 10px;
+  text-shadow: 0 0 12px rgba(0,0,0,1);
+}
+
+/* hover reveals link */
+.tile a.link {
+  position: absolute; inset: 0; z-index: 7;
+  display: flex; align-items: flex-end; justify-content: flex-end;
+  padding: 12px 14px;
+  text-decoration: none;
+}
+.tile a.link span {
+  font-size: 8px; letter-spacing: .3em;
+  color: var(--cyan); opacity: 0;
+  text-transform: uppercase;
+  transition: opacity .3s;
+  text-shadow: 0 0 10px var(--cyan);
+}
+.tile:hover a.link span { opacity: .7; }
+/* tile hover border flash */
+.tile::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 8;
+  pointer-events: none;
+  border: 1px solid transparent;
+  transition: border-color .3s;
+}
+.tile:hover::before { border-color: rgba(0,255,224,.18); }
+
+/* ── FOOTER ── */
+footer {
+  position: relative; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap;
+  gap: clamp(14px,2.5vw,36px);
+  padding: 16px clamp(10px,2vw,28px);
+  margin: 1px clamp(8px,1.5vw,20px) 0;
+  background: rgba(3,3,8,.97);
+  border-top: 1px solid rgba(0,255,224,.08);
+  margin-bottom: 0;
+  padding-bottom: 20px;
+}
+footer a {
+  display: flex; align-items: center;
+  color: #2a2a2a; text-decoration: none;
+  transition: color .2s, transform .2s;
+}
+footer a:hover { color: var(--cyan); transform: translateY(-2px); }
+footer a svg { width: 17px; height: 17px; fill: currentColor; }
+.contact-link {
+  font-size: 8px; letter-spacing: .25em; text-transform: uppercase;
+  color: #1c1c1c; text-decoration: none; transition: color .2s;
+}
+.contact-link:hover { color: var(--cyan); }
+.dot { width:2px; height:2px; border-radius:50%; background:#111; }
+
+@media (max-width: 560px) {
+  .grid { grid-template-columns: 1fr; }
+  .tile { height: clamp(240px, 65vw, 380px); }
+  .hero-title { letter-spacing: .02em; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<header class="hero">
+  <p class="hero-eyebrow">Est. 2024 · Málaga</p>
+  <h1 class="hero-title">GlueRecords</h1>
+  <div class="hero-rule"></div>
+  <p class="hero-sub">Gluing Infinite Music to the Agent Internet</p>
+</header>
+
+<main class="grid">
+
+  <!-- NAHUEL -->
+  <div class="tile" id="t-nahuel">
+    <canvas id="c-nahuel"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">Nahuel</span>
+      <span class="tile-sub">Analog Ritual</span>
+    </div>
+    <a class="link" href="https://nahuel.club" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
+  <!-- AMORO -->
+  <div class="tile" id="t-amoro">
+    <canvas id="c-amoro"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">Amoro</span>
+      <span class="tile-sub">Never Not Playing</span>
+    </div>
+    <a class="link" href="https://amoro.club" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
+  <!-- KAMALEONICA -->
+  <div class="tile" id="t-kamaleonica">
+    <canvas id="c-kamaleonica"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">Kamaleonica</span>
+      <span class="tile-sub">Cosmic Sound</span>
+    </div>
+    <a class="link" href="https://kamaleonica.com" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
+  <!-- BREAKING ROBOTS -->
+  <div class="tile" id="t-breaking">
+    <canvas id="c-breaking"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">Breaking Robots</span>
+      <span class="tile-sub">Glitch · Noise · Chaos</span>
+    </div>
+    <a class="link" href="https://breakingrobots.com" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
+  <!-- BENNY ASOTO -->
+  <div class="tile" id="t-benny">
+    <canvas id="c-benny"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">Benny Asoto</span>
+      <span class="tile-sub">Techno · Hypnotic</span>
+    </div>
+    <a class="link" href="#" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
+  <!-- FOREVERNESS -->
+  <div class="tile" id="t-foreverness">
+    <canvas id="c-foreverness"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">Foreverness</span>
+      <span class="tile-sub">Ethereal · Ambient</span>
+    </div>
+    <a class="link" href="#" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
+</main>
+
+<footer>
+  <a href="https://ra.co" target="_blank" rel="noopener" title="Resident Advisor">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm-1.5 5h3c1.657 0 3 1.343 3 3 0 1.306-.835 2.417-2 2.83V13l2.5 4h-2l-2.5-4H10v4H8.5V7H10.5zm0 1.5v3H13c.828 0 1.5-.672 1.5-1.5S13.828 8.5 13 8.5h-2.5z"/></svg>
+  </a>
+  <a href="https://bandcamp.com" target="_blank" rel="noopener" title="Bandcamp">
+    <svg viewBox="0 0 24 24"><path d="M0 18.75l7.437-13.5H24l-7.438 13.5z"/></svg>
+  </a>
+  <a href="https://soundcloud.com" target="_blank" rel="noopener" title="SoundCloud">
+    <svg viewBox="0 0 24 24"><path d="M1.175 12.225c-.015 0-.023.01-.023.025l-.302 1.99.302 1.966c0 .016.008.026.023.026.014 0 .022-.01.025-.026l.344-1.966-.344-1.99c-.003-.015-.011-.025-.025-.025zm.882-.29c-.019 0-.031.013-.031.031l-.259 2.274.259 2.23c0 .018.012.031.031.031.018 0 .03-.013.03-.031l.296-2.23-.296-2.274c0-.018-.012-.031-.03-.031zm2.868-.464c-.025 0-.043.018-.043.043l-.17 2.608.17 2.506c0 .025.018.043.043.043.024 0 .042-.018.042-.043l.194-2.506-.194-2.608c0-.025-.018-.043-.042-.043zm4.925-2.947c-.163 0-.321.02-.472.057-.097-2.22-1.924-3.987-4.167-3.987-1.008 0-1.934.355-2.655.94-.274.22-.347.446-.35.668v7.84c.003.23.183.424.413.44h7.231c.407 0 .737-.33.737-.737V9.167c0-.407-.33-.737-.737-.737zm4.3.613c-.22 0-.398.178-.398.398v6.875c0 .22.178.398.398.398h6.72C21.78 17.07 24 14.851 24 12.112c0-2.74-2.22-4.96-4.959-4.96-1.218 0-2.33.44-3.19 1.165-.263-1.865-1.867-3.297-3.793-3.297z"/></svg>
+  </a>
+  <a href="https://spotify.com" target="_blank" rel="noopener" title="Spotify">
+    <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+  </a>
+  <a href="https://mixcloud.com" target="_blank" rel="noopener" title="Mixcloud">
+    <svg viewBox="0 0 24 24"><path d="M11.475 4.31c-3.975.57-7.05 3.975-7.05 8.1 0 .435.03.87.09 1.29-.765.6-1.26 1.53-1.26 2.565 0 1.8 1.47 3.27 3.27 3.27h12.96c2.085 0 3.78-1.695 3.78-3.78 0-1.785-1.245-3.285-2.91-3.69-.03-3.345-2.19-6.18-5.16-7.17a5.46 5.46 0 0 0-3.72-.585zm.6 1.455c.27 0 .54.03.81.075 2.49.45 4.41 2.625 4.41 5.265v.54l.54.075c1.11.165 1.965 1.11 1.965 2.265 0 1.26-1.02 2.28-2.28 2.28H6.525c-1.005 0-1.77-.765-1.77-1.77 0-.675.375-1.275.975-1.59l.45-.225-.06-.51c-.06-.36-.09-.735-.09-1.11 0-3.405 2.595-6.225 5.88-6.285h.165z"/></svg>
+  </a>
+  <a href="https://youtube.com" target="_blank" rel="noopener" title="YouTube">
+    <svg viewBox="0 0 24 24"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+  </a>
+  <span class="dot"></span>
+  <a href="mailto:info@gluerecords.club" class="contact-link">contact</a>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════
+   GLOBAL MOUSE / TOUCH
+═══════════════════════════════════════════════ */
+const PTR = { x: window.innerWidth/2, y: window.innerHeight/2, nx: 0, ny: 0 };
+window.addEventListener('mousemove', e => {
+  PTR.x = e.clientX; PTR.y = e.clientY;
+  PTR.nx = e.clientX/window.innerWidth*2-1;
+  PTR.ny = e.clientY/window.innerHeight*2-1;
+}, {passive:true});
+window.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  PTR.x = t.clientX; PTR.y = t.clientY;
+  PTR.nx = t.clientX/window.innerWidth*2-1;
+  PTR.ny = t.clientY/window.innerHeight*2-1;
+}, {passive:true});
+
+function fitTile(cv) {
+  const r = cv.parentElement.getBoundingClientRect();
+  const w = Math.floor(r.width), h = Math.floor(r.height);
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; return true; }
+  return false;
+}
+
+/* ═══════════════════════════════════════════════
+   BG — PENROSE TESSELLATION + MOUSE WARP
+   Full-page Penrose tiling, interactive
+═══════════════════════════════════════════════ */
+(function(){
+  const cv = document.getElementById('bg-canvas');
+  const ctx = cv.getContext('2d');
+  const PHI = (1+Math.sqrt(5))/2;
+  let W, H, tris = [], t = 0;
+
+  function subdivide(ts) {
+    const out = [];
+    for (const {k,A,B,C} of ts) {
+      if (k === 0) {
+        const P = {x:A.x+(B.x-A.x)/PHI, y:A.y+(B.y-A.y)/PHI};
+        out.push({k:0,A:C,B:P,C:B});
+        out.push({k:1,A:P,B:C,C:A});
+      } else {
+        const Q = {x:B.x+(A.x-B.x)/PHI, y:B.y+(A.y-B.y)/PHI};
+        const R = {x:B.x+(C.x-B.x)/PHI, y:B.y+(C.y-B.y)/PHI};
+        out.push({k:1,A:R,B:C,C:A});
+        out.push({k:1,A:Q,B:R,C:B});
+        out.push({k:0,A:R,B:Q,C:A});
+      }
+    }
+    return out;
+  }
+
+  function build() {
+    tris = [];
+    const cx=W/2, cy=H/2, R=Math.max(W,H)*1.15;
+    for (let i=0;i<10;i++) {
+      const a1=(2*i-1)*Math.PI/10, a2=(2*i+1)*Math.PI/10;
+      tris.push({k:i%2,
+        A:{x:cx,y:cy},
+        B:{x:cx+R*Math.cos(a1),y:cy+R*Math.sin(a1)},
+        C:{x:cx+R*Math.cos(a2),y:cy+R*Math.sin(a2)}
+      });
+    }
+    for (let i=0;i<5;i++) tris = subdivide(tris);
+    // Assign random personality to each tri once
+    tris.forEach(tri => {
+      tri.phase = Math.random()*Math.PI*2;
+      tri.speed = .4+Math.random()*.8;
+    });
+  }
+
+  function resize() {
+    W = cv.width = window.innerWidth;
+    H = cv.height = window.innerHeight;
+    build();
+  }
+
+  function draw() {
+    requestAnimationFrame(draw);
+    t += .003;
+    ctx.clearRect(0,0,W,H);
+
+    const mx = PTR.nx, my = PTR.ny;
+
+    for (const tri of tris) {
+      // Warp verts
+      function wv(v) {
+        const dx = (v.x/W)*2-1-mx, dy = (v.y/H)*2-1-my;
+        const d2 = dx*dx+dy*dy;
+        const pull = Math.exp(-d2*5)*22;
+        return {
+          x: v.x + mx*pull + Math.sin(t*tri.speed+tri.phase+v.x*.005)*1.8,
+          y: v.y + my*pull + Math.cos(t*tri.speed+tri.phase+v.y*.005)*1.8
+        };
+      }
+      const a=wv(tri.A), b=wv(tri.B), c=wv(tri.C);
+      const cx2=(a.x+b.x+c.x)/3, cy2=(a.y+b.y+c.y)/3;
+
+      const dm = Math.hypot(cx2-PTR.x, cy2-PTR.y);
+      const near = Math.max(0, 1-dm/280);
+      const wave = Math.sin(t*.8+tri.phase);
+      const lum = tri.k===0
+        ? 4+wave*2+near*18
+        : 7+wave*2.5+near*14;
+      const al = .72 + near*.22;
+
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.lineTo(c.x,c.y);
+      ctx.closePath();
+      ctx.fillStyle = `hsla(200,50%,${lum}%,${al})`;
+      ctx.fill();
+
+      // edge glow near mouse
+      if (near > .12) {
+        ctx.strokeStyle = `rgba(0,255,224,${near*.22})`;
+        ctx.lineWidth = .6;
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = 'rgba(0,255,224,.025)';
+        ctx.lineWidth = .4;
+        ctx.stroke();
+      }
+    }
+
+    // Random noise lines
+    if (Math.random() < .006) {
+      const y = Math.random()*H;
+      ctx.fillStyle = `rgba(0,255,224,${.03+Math.random()*.05})`;
+      ctx.fillRect(0,y,W,Math.random()*3+1);
+    }
+  }
+
+  window.addEventListener('resize', resize, {passive:true});
+  resize(); draw();
+})();
+
+
+/* ═══════════════════════════════════════════════
+   NAHUEL — Realistic vinyl, spins on proximity
+═══════════════════════════════════════════════ */
+(function(){
+  const cv = document.getElementById('c-nahuel');
+  const ctx = cv.getContext('2d');
+  const tile = document.getElementById('t-nahuel');
+  let W, H, angle = 0, speed = 0.003, targetSpeed = 0.003;
+  let hoverDist = 9999, grainCv, grainCtx;
+
+  function makeGrain(w,h) {
+    grainCv = document.createElement('canvas');
+    grainCv.width=w; grainCv.height=h;
+    grainCtx = grainCv.getContext('2d');
+    const id = grainCtx.createImageData(w,h);
+    for (let i=0;i<id.data.length;i+=4) {
+      const v=Math.random()*28;
+      id.data[i]=v; id.data[i+1]=v; id.data[i+2]=v; id.data[i+3]=22;
+    }
+    grainCtx.putImageData(id,0,0);
+  }
+
+  window.addEventListener('mousemove', e => {
+    const r = tile.getBoundingClientRect();
+    hoverDist = Math.hypot(e.clientX-r.left-r.width/2, e.clientY-r.top-r.height/2);
+  }, {passive:true});
+
+  function draw() {
+    fitTile(cv); W=cv.width; H=cv.height;
+    if (!grainCv||grainCv.width!==W) makeGrain(W,H);
+
+    const prox = Math.max(0, 1-hoverDist/Math.max(W,H)*.9);
+    targetSpeed = .003 + prox*.055;
+    speed += (targetSpeed-speed)*.055;
+    angle += speed;
+
+    const cx=W/2, cy=H/2, maxR=Math.min(W,H)*.43;
+
+    ctx.fillStyle='#070707'; ctx.fillRect(0,0,W,H);
+
+    // faint N watermark
+    ctx.font=`bold ${W*.55}px 'Special Elite',serif`;
+    ctx.fillStyle='rgba(255,255,255,.014)';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('N',cx,cy);
+
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle);
+
+    // vinyl disc radial gradient
+    const disc = ctx.createRadialGradient(0,0,maxR*.02,0,0,maxR);
+    disc.addColorStop(0,'#1d1d1d');
+    disc.addColorStop(.3,'#101010');
+    disc.addColorStop(.65,'#0c0c0c');
+    disc.addColorStop(1,'#1a1a1a');
+    ctx.beginPath(); ctx.arc(0,0,maxR,0,Math.PI*2);
+    ctx.fillStyle=disc; ctx.fill();
+
+    // grooves
+    for (let i=4;i<42;i++) {
+      const gr = (i/42)*maxR*.93+maxR*.05;
+      ctx.beginPath(); ctx.arc(0,0,gr,0,Math.PI*2);
+      ctx.strokeStyle = i%5===0 ? 'rgba(255,255,255,.075)' : 'rgba(255,255,255,.028)';
+      ctx.lineWidth = i%5===0 ? .9 : .35;
+      ctx.stroke();
+    }
+
+    // spinning specular
+    const spec = ctx.createLinearGradient(-maxR,0,maxR,0);
+    spec.addColorStop(0,'rgba(255,255,255,0)');
+    spec.addColorStop(.47,'rgba(255,255,255,0)');
+    spec.addColorStop(.5,'rgba(255,255,255,.1)');
+    spec.addColorStop(.53,'rgba(255,255,255,0)');
+    spec.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=spec;
+    ctx.fillRect(-maxR,-maxR,maxR*2,maxR*2);
+
+    // label disc
+    const labelR = maxR*.3;
+    const lg = ctx.createRadialGradient(-labelR*.08,-labelR*.12,0,0,0,labelR);
+    lg.addColorStop(0,'#ede4ce'); lg.addColorStop(1,'#cec0a2');
+    ctx.beginPath(); ctx.arc(0,0,labelR,0,Math.PI*2);
+    ctx.fillStyle=lg; ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=.8; ctx.stroke();
+
+    // label text (counter-rotate)
+    ctx.rotate(-angle);
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.font=`bold ${Math.max(7,W*.023)}px 'Special Elite',serif`;
+    ctx.fillStyle='#1a1a18';
+    ctx.fillText('NAHUEL',0,-labelR*.2);
+    ctx.font=`${Math.max(5,W*.013)}px 'Share Tech Mono',monospace`;
+    ctx.fillStyle='rgba(26,26,22,.6)';
+    ctx.fillText('ANALOG · RITUAL',0,labelR*.1);
+    ctx.fillText('VINYL · DJ · SETS',0,labelR*.27);
+
+    // spindle hole
+    ctx.beginPath(); ctx.arc(0,0,maxR*.028,0,Math.PI*2);
+    ctx.fillStyle='#070707'; ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.lineWidth=.5; ctx.stroke();
+
+    ctx.restore();
+
+    // grain
+    ctx.drawImage(grainCv,0,0);
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window.addEventListener('resize',()=>{ fitTile(cv); makeGrain(cv.width,cv.height); },{passive:true});
+})();
+
+
+/* ═══════════════════════════════════════════════
+   AMORO — Fractal tree (recursive, animated)
+   + Coptic Ⲁ Ⲙ Ⲟ ꓤ Ⲟ letters floating
+   Pure black, white, minimal — faithful to site
+═══════════════════════════════════════════════ */
+(function(){
+  const cv = document.getElementById('c-amoro');
+  const ctx = cv.getContext('2d');
+  let W, H, t = 0;
+
+  function branch(x1,y1,len,angle,depth,maxDepth,alpha){
+    if (depth>maxDepth||len<1.2) return;
+    const x2 = x1 + Math.cos(angle)*len;
+    const y2 = y1 + Math.sin(angle)*len;
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+    const fade = (1-depth/maxDepth);
+    ctx.strokeStyle = `rgba(255,255,255,${(alpha*fade*.85).toFixed(3)})`;
+    ctx.lineWidth = Math.max(.4, (maxDepth-depth)*.5);
+    ctx.stroke();
+
+    const spread = (.38+.12*Math.sin(t*.6))*Math.PI;
+    const lenRatio = .64 + .04*Math.sin(t*.4+depth);
+    branch(x2,y2,len*lenRatio, angle-spread*.5, depth+1,maxDepth,alpha);
+    branch(x2,y2,len*lenRatio, angle+spread*.5, depth+1,maxDepth,alpha);
+  }
+
+  const COPTIC = ['Ⲁ','Ⲙ','Ⲟ','ꓤ','Ⲟ'];
+
+  function draw(){
+    fitTile(cv); W=cv.width; H=cv.height;
+    t += .012;
+
+    ctx.fillStyle='rgba(0,0,0,.18)';
+    ctx.fillRect(0,0,W,H);
+
+    // fractal tree from bottom center
+    const treeH = H*.38;
+    const depth = W<400 ? 8 : 10;
+    ctx.lineCap='round';
+    branch(W/2, H*.92, treeH, -Math.PI/2, 0, depth, 1);
+
+    // second mirrored ghost tree, very faint
+    ctx.globalAlpha = .22;
+    branch(W/2, H*.92, treeH*.7, -Math.PI/2+.12*Math.sin(t*.2), 0, depth-2, .4);
+    ctx.globalAlpha = 1;
+
+    // Coptic letters floating above tree
+    const fs = Math.min(W*.11, H*.18, 58);
+    ctx.font = `${fs}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    COPTIC.forEach((ch,i) => {
+      const total = COPTIC.length;
+      const x = W/2 + (i - (total-1)/2)*fs*1.18;
+      const y = H*.25 + Math.sin(t*.6+i*.7)*5;
+      const alpha = .75+.22*Math.sin(t*.5+i*.9);
+      ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+      ctx.fillText(ch, x, y);
+    });
+
+    requestAnimationFrame(draw);
+  }
+
+  // clear on start
+  const doFirst = () => { fitTile(cv); W=cv.width; H=cv.height; ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); draw(); };
+  doFirst();
+  window.addEventListener('resize',()=>fitTile(cv),{passive:true});
+})();
+
+
+/* ═══════════════════════════════════════════════
+   KAMALEONICA — Tap-shifting mandala
+   Faithful: rotating sacred geometry, tap=shift
+   Earth palette: saffron/terracotta/indigo
+═══════════════════════════════════════════════ */
+(function(){
+  const cv = document.getElementById('c-kamaleonica');
+  const ctx = cv.getContext('2d');
+  const tile = document.getElementById('t-kamaleonica');
+  let W, H, t=0, pat=0;
+  let mx=.5, my=.5;
+
+  const PALS = [
+    ['212,140,0','193,68,14','45,27,105'],
+    ['80,200,100','20,110,55','5,40,20'],
+    ['220,55,30','160,20,10','60,5,5'],
+    ['70,130,240','30,60,200','8,18,100'],
+    ['255,175,0','200,95,0','100,35,0'],
+    ['200,200,200','130,130,130','50,50,50'],
+  ];
+
+  tile.addEventListener('click', ()=>{ pat=(pat+1)%PALS.length; });
+  tile.addEventListener('touchstart', ()=>{ pat=(pat+1)%PALS.length; }, {passive:true});
+  tile.addEventListener('mousemove', e=>{
+    const r=tile.getBoundingClientRect();
+    mx=(e.clientX-r.left)/r.width;
+    my=(e.clientY-r.top)/r.height;
+  }, {passive:true});
+
+  function flowerOfLife(cx,cy,r,col,al){
+    ctx.strokeStyle=`rgba(${col},${al})`;
+    ctx.lineWidth=.8;
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+    for(let i=0;i<6;i++){
+      const a=i*Math.PI/3;
+      ctx.beginPath(); ctx.arc(cx+Math.cos(a)*r,cy+Math.sin(a)*r,r,0,Math.PI*2); ctx.stroke();
+    }
+  }
+
+  function draw(){
+    fitTile(cv); W=cv.width; H=cv.height;
+    t+=.009;
+    const p=PALS[pat];
+    const cx=W/2, cy=H/2, maxR=Math.min(W,H)*.43;
+    const lx=mx*2-1, ly=my*2-1;
+
+    // cosmic bg
+    const bg=ctx.createRadialGradient(cx+lx*20,cy+ly*20,0,cx,cy,maxR*1.4);
+    bg.addColorStop(0,'rgba(20,10,45,.98)');
+    bg.addColorStop(1,'rgba(4,2,12,1)');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+    // outer rotating ring system
+    for(let ring=0;ring<5;ring++){
+      const rr=maxR*(.25+ring*.17);
+      const nSeg=6+ring*4;
+      const dir=ring%2===0?1:-1;
+      ctx.save(); ctx.translate(cx,cy);
+      ctx.rotate(t*(.07+ring*.018)*dir+lx*.05);
+      ctx.strokeStyle=`rgba(${ring<2?p[0]:p[2]},.${Math.max(3,11-ring*2)})`;
+      ctx.lineWidth=.6;
+      for(let i=0;i<nSeg;i++){
+        const a=(i/nSeg)*Math.PI*2;
+        ctx.beginPath(); ctx.moveTo(0,0);
+        ctx.lineTo(Math.cos(a)*rr, Math.sin(a)*rr);
+        ctx.stroke();
+      }
+      // arc
+      ctx.beginPath(); ctx.arc(0,0,rr,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(${p[0]},.${Math.max(4,14-ring*3)})`;
+      ctx.lineWidth=.5; ctx.stroke();
+      ctx.restore();
+    }
+
+    // flower of life
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(t*.05+ly*.04);
+    flowerOfLife(0,0,maxR*.2,p[0],.28);
+    ctx.restore();
+
+    // Sri Yantra triangles
+    for(let k=0;k<6;k++){
+      const tR=maxR*(.08+k*.055);
+      const spin=t*(.08+k*.025)*(k%2===0?1:-1)+lx*.03;
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(spin);
+      ctx.beginPath();
+      for(let i=0;i<3;i++){
+        const a=i*Math.PI*2/3-Math.PI/2;
+        i===0 ? ctx.moveTo(Math.cos(a)*tR,Math.sin(a)*tR)
+              : ctx.lineTo(Math.cos(a)*tR,Math.sin(a)*tR);
+      }
+      ctx.closePath();
+      ctx.strokeStyle=`rgba(${k%2===0?p[1]:p[2]},.${Math.max(6,20-k*3)})`;
+      ctx.lineWidth=.8; ctx.stroke();
+      ctx.restore();
+    }
+
+    // pulsing aura
+    const pulse = .72+.28*Math.sin(t*2.4+lx);
+    const aura=ctx.createRadialGradient(cx,cy,0,cx,cy,maxR*.28);
+    aura.addColorStop(0,`rgba(${p[0]},${(.38*pulse).toFixed(2)})`);
+    aura.addColorStop(.5,`rgba(${p[1]},${(.1*pulse).toFixed(2)})`);
+    aura.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=aura; ctx.fillRect(0,0,W,H);
+
+    // center bindu
+    ctx.beginPath(); ctx.arc(cx,cy,2+pulse*2.5,0,Math.PI*2);
+    ctx.fillStyle=`rgba(${p[0]},${(.88*pulse).toFixed(2)})`; ctx.fill();
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window.addEventListener('resize',()=>fitTile(cv),{passive:true});
+})();
+
+
+/* ═══════════════════════════════════════════════
+   BREAKING ROBOTS — Pure B&W, maximum glitch
+   Horizontal slice corruption, white flash,
+   noise storms, grid artifacts, no colour
+═══════════════════════════════════════════════ */
+(function(){
+  const cv = document.getElementById('c-breaking');
+  const ctx = cv.getContext('2d');
+  let W, H, t=0, flashEnd=0, nextFlash=2;
+  let off, octx;
+
+  function makeOff(){
+    off=document.createElement('canvas');
+    off.width=W; off.height=H;
+    octx=off.getContext('2d');
+  }
+
+  function renderBase(){
+    octx.fillStyle='#000'; octx.fillRect(0,0,W,H);
+    // Machine grid
+    const gs=Math.max(18,Math.floor(W/22));
+    for(let x=0;x<W;x+=gs){
+      for(let y=0;y<H;y+=gs){
+        const v=Math.sin(x*.035+t*1.2)*Math.cos(y*.038+t*.9);
+        const bright = v>.35?(v>.72?.38:.14):0;
+        if(!bright) continue;
+        octx.fillStyle=`rgba(255,255,255,${bright})`;
+        octx.fillRect(x+1,y+1,gs-2,gs-2);
+      }
+    }
+    // vertical scanlines
+    for(let i=0;i<W;i+=4){
+      octx.fillStyle=`rgba(0,0,0,${.12+Math.random()*.08})`;
+      octx.fillRect(i,0,1,H);
+    }
+  }
+
+  function draw(){
+    fitTile(cv); W=cv.width; H=cv.height;
+    if(!off||off.width!==W||off.height!==H) makeOff();
+    t+=.02;
+
+    // Flash white
+    if(t>nextFlash){ flashEnd=t+.07+Math.random()*.04; nextFlash=t+.8+Math.random()*2.2; }
+    if(t<flashEnd){
+      ctx.fillStyle=`rgba(255,255,255,${.5+Math.random()*.5})`;
+      ctx.fillRect(0,0,W,H);
+      requestAnimationFrame(draw); return;
+    }
+
+    renderBase();
+
+    // Slice corruption
+    ctx.clearRect(0,0,W,H);
+    const nSlice=4+Math.floor(Math.random()*9);
+    let y=0;
+    for(let s=0;s<nSlice;s++){
+      const sh=Math.max(4,Math.floor((H/nSlice)+(Math.random()-.5)*H*.1));
+      const shift=(Math.random()-.5)*(Math.random()<.12?80:12);
+      ctx.drawImage(off,0,y,W,sh,shift,y,W,sh);
+      y+=sh; if(y>=H) break;
+    }
+
+    // Invert random band
+    if(Math.random()<.15){
+      const by=Math.random()*H, bh=2+Math.random()*8;
+      ctx.save();
+      ctx.globalCompositeOperation='difference';
+      ctx.fillStyle=`rgba(255,255,255,${.25+Math.random()*.4})`;
+      ctx.fillRect(0,by,W,bh);
+      ctx.restore();
+    }
+
+    // Noise storm
+    if(Math.random()<.35){
+      for(let i=0;i<80;i++){
+        ctx.fillStyle=`rgba(255,255,255,${Math.random()*.7})`;
+        ctx.fillRect(Math.random()*W,Math.random()*H,1,1);
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window.addEventListener('resize',()=>{ fitTile(cv); makeOff(); },{passive:true});
+})();
+
+
+/* ═══════════════════════════════════════════════
+   BENNY ASOTO — Hypnotic techno grid
+   Cyan pulse grid, phase-shifting rings,
+   dark industrial energy
+═══════════════════════════════════════════════ */
+(function(){
+  const cv = document.getElementById('c-benny');
+  const ctx = cv.getContext('2d');
+  let W, H, t=0;
+  const tile = document.getElementById('t-benny');
+  let mx=.5, my=.5;
+  tile.addEventListener('mousemove',e=>{
+    const r=tile.getBoundingClientRect();
+    mx=(e.clientX-r.left)/r.width; my=(e.clientY-r.top)/r.height;
+  },{passive:true});
+
+  function draw(){
+    fitTile(cv); W=cv.width; H=cv.height;
+    t+=.028;
+    ctx.fillStyle='rgba(4,4,12,.88)'; ctx.fillRect(0,0,W,H);
+
+    const cx=W/2+((mx-.5)*W*.3), cy=H/2+((my-.5)*H*.3);
+    const step=Math.max(24,Math.floor(W/18));
+
+    // Grid of pulsing nodes
+    for(let x=step/2;x<W;x+=step){
+      for(let y=step/2;y<H;y+=step){
+        const d=Math.hypot(x-cx,y-cy);
+        const wave=Math.sin(t*2.8-d*.022)*.5+.5;
+        const size=3.5*wave+.5;
+        const al=wave*.7+.08;
+        ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2);
+        ctx.fillStyle=`rgba(0,255,224,${al.toFixed(2)})`; ctx.fill();
+        // connect to neighbors (horizontal only, lightweight)
+        if(x+step<W){
+          const wave2=Math.sin(t*2.8-(d+step*.5)*.022)*.5+.5;
+          ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+step,y);
+          ctx.strokeStyle=`rgba(0,255,224,${(wave*wave2*.18).toFixed(2)})`;
+          ctx.lineWidth=.7; ctx.stroke();
+        }
+      }
+    }
+
+    // Concentric rings from cursor
+    for(let ring=1;ring<6;ring++){
+      const r2=ring*Math.max(W,H)*.11+Math.sin(t*1.8+ring)*8;
+      const al=Math.max(0,.35-ring*.06)*(.5+.5*Math.sin(t*2+ring));
+      ctx.beginPath(); ctx.arc(cx,cy,r2,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(0,255,224,${al.toFixed(2)})`;
+      ctx.lineWidth=.8; ctx.stroke();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window.addEventListener('resize',()=>fitTile(cv),{passive:true});
+})();
+
+
+/* ═══════════════════════════════════════════════
+   FOREVERNESS — Ethereal drift particles
+   Deep teal/mist, slow-float particles,
+   soft aureole blur rings, dreamlike
+═══════════════════════════════════════════════ */
+(function(){
+  const cv = document.getElementById('c-foreverness');
+  const ctx = cv.getContext('2d');
+  let W, H, t=0;
+  const tile = document.getElementById('t-foreverness');
+  let particles = [];
+
+  function makeParticles(){
+    particles=[];
+    const n = Math.floor((W*H)/5500);
+    for(let i=0;i<n;i++){
+      particles.push({
+        x: Math.random()*W, y: Math.random()*H,
+        r: .6+Math.random()*2.8,
+        vx: (Math.random()-.5)*.18,
+        vy: -.08-Math.random()*.25,
+        phase: Math.random()*Math.PI*2,
+        drift: (Math.random()-.5)*.012
+      });
+    }
+  }
+
+  function draw(){
+    fitTile(cv); W=cv.width; H=cv.height;
+    if(!particles.length) makeParticles();
+    t+=.012;
+
+    // deep dark bg with slow fade
+    ctx.fillStyle='rgba(3,8,14,.25)'; ctx.fillRect(0,0,W,H);
+
+    const cx=W/2, cy=H/2;
+
+    // soft aureole rings
+    for(let ring=0;ring<4;ring++){
+      const pr = Math.min(W,H)*(.12+ring*.09);
+      const pulse=Math.sin(t*.7+ring*1.2)*.5+.5;
+      const al=(.06-ring*.012)*pulse;
+      if(al<=0) continue;
+      const g=ctx.createRadialGradient(cx,cy,0,cx,cy,pr);
+      g.addColorStop(0,`rgba(0,220,180,${al})`);
+      g.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    }
+
+    // particles
+    for(const p of particles){
+      p.x += p.vx + Math.sin(t*.4+p.phase)*p.drift;
+      p.y += p.vy;
+      if(p.y<-4){ p.y=H+4; p.x=Math.random()*W; }
+      const al=.25+.55*Math.sin(t*.6+p.phase);
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(0,255,220,${Math.max(0,al).toFixed(2)})`; ctx.fill();
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window.addEventListener('resize',()=>{ fitTile(cv); particles=[]; },{passive:true});
+})();
+
+</script>
+</body>
+</html>
