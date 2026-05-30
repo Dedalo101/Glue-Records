@@ -266,6 +266,16 @@ footer a svg { width: 17px; height: 17px; fill: currentColor; }
     <a class="link" href="https://kamaleonica.com" target="_blank" rel="noopener"><span>visit ↗</span></a>
   </div>
 
+  <!-- BENNY YASOTO -->
+  <div class="tile" id="t-benny">
+    <canvas id="c-benny"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">Benny Yasoto</span>
+      <span class="tile-sub">Techno · Hypnotic</span>
+    </div>
+    <a class="link" href="https://bennyasoto.com" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
   <!-- BREAKING ROBOTS -->
   <div class="tile" id="t-breaking">
     <canvas id="c-breaking"></canvas>
@@ -276,16 +286,6 @@ footer a svg { width: 17px; height: 17px; fill: currentColor; }
     <a class="link" href="https://breakingrobots.com" target="_blank" rel="noopener"><span>visit ↗</span></a>
   </div>
 
-  <!-- BENNY ASOTO -->
-  <div class="tile" id="t-benny">
-    <canvas id="c-benny"></canvas>
-    <div class="tile-info">
-      <span class="tile-name">Benny Asoto</span>
-      <span class="tile-sub">Techno · Hypnotic</span>
-    </div>
-    <a class="link" href="#" target="_blank" rel="noopener"><span>visit ↗</span></a>
-  </div>
-
   <!-- FOREVERNESS -->
   <div class="tile" id="t-foreverness">
     <canvas id="c-foreverness"></canvas>
@@ -293,7 +293,27 @@ footer a svg { width: 17px; height: 17px; fill: currentColor; }
       <span class="tile-name">Foreverness</span>
       <span class="tile-sub">Ethereal · Ambient</span>
     </div>
-    <a class="link" href="#" target="_blank" rel="noopener"><span>visit ↗</span></a>
+    <a class="link" href="https://foreverness.club" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
+  <!-- DJ HOPPI -->
+  <div class="tile" id="t-hoppi">
+    <canvas id="c-hoppi"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">DJ Hoppi</span>
+      <span class="tile-sub">Brew · Beats</span>
+    </div>
+    <a class="link" href="https://djhoppi.club" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
+  <!-- PRISSS -->
+  <div class="tile" id="t-prisss">
+    <canvas id="c-prisss"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">Prisss</span>
+      <span class="tile-sub">Patterns · Inside Groove</span>
+    </div>
+    <a class="link" href="https://prisss.com" target="_blank" rel="noopener"><span>visit ↗</span></a>
   </div>
 
 </main>
@@ -966,6 +986,470 @@ function fitTile(cv) {
   }
   draw();
   window.addEventListener('resize',()=>{ fitTile(cv); particles=[]; },{passive:true});
+})();
+
+
+/* ═══════════════════════════════════════════════
+   DJ HOPPI — Faithful port of DjHoppi.club visuals.js
+   Rising beer bubbles (rings + specular glint) +
+   floating hop cones with veins, dark bottle-green bg.
+   Mouse/touch spawns hop flower rain on the tile.
+═══════════════════════════════════════════════ */
+(function(){
+  const cv = document.getElementById('c-hoppi');
+  const ctx = cv.getContext('2d');
+  const tile = document.getElementById('t-hoppi');
+  let W, H, tickT = 0;
+  let particles = [];
+  let hopFlowers = [];
+
+  function spawnBubble(yOverride) {
+    const r = Math.random() * 10 + 3;
+    return {
+      type: 'bubble',
+      r,
+      anchorX: Math.random() * (W || 400),
+      y: yOverride !== undefined ? yOverride : (H || 300) + r,
+      speed: r * 0.28 + Math.random() * 0.5,
+      swingAmp: r * 0.7 + Math.random() * 2.5,
+      swingFreq: 0.012 + Math.random() * 0.018,
+      phase: Math.random() * Math.PI * 2,
+      anchorDrift: (Math.random() - 0.5) * 0.05,
+      alpha: 0.25 + Math.random() * 0.35,
+    };
+  }
+
+  function spawnHop(yOverride) {
+    return {
+      type: 'hop',
+      r: Math.random() * 7 + 5,
+      anchorX: Math.random() * (W || 400),
+      y: yOverride !== undefined ? yOverride : (H || 300) + 20,
+      speed: Math.random() * 0.16 + 0.06,
+      swingAmp: Math.random() * 7 + 3,
+      swingFreq: 0.006 + Math.random() * 0.008,
+      phase: Math.random() * Math.PI * 2,
+      anchorDrift: (Math.random() - 0.5) * 0.02,
+      alpha: 0.07 + Math.random() * 0.09,
+    };
+  }
+
+  // Hop flower for mouse rain — faithful to visuals.js createHopFlower
+  function createHopFlower(x, y) {
+    return {
+      x: x !== null ? x : Math.random() * W,
+      y: y !== null ? y : -30,
+      r: 18 + Math.random() * 10,
+      speed: 1.2 + Math.random() * 1.8,
+      popped: false,
+      popProgress: 0,
+      hueBase: Math.random() * 360
+    };
+  }
+
+  function spawnHopFlowers(count, x) {
+    for (let i = 0; i < count; i++) {
+      hopFlowers.push(createHopFlower(x + (Math.random() - 0.5) * 60, -30));
+    }
+  }
+
+  function drawHopFlower(hop, t) {
+    ctx.save();
+    ctx.translate(hop.x, hop.y);
+    const scale = hop.r / 24;
+    ctx.scale(scale, scale);
+    const hue = (t / 40 + hop.x + hop.y) % 360;
+    for (let layer = 0; layer < 5; layer++) {
+      ctx.beginPath();
+      ctx.ellipse(0, 7 * layer, 14 - layer * 2.2, 10 - layer * 1.5, 0, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.globalAlpha = 0.7 - layer * 0.11;
+      ctx.fillStyle = `hsl(${hue + layer * 8},80%,${68 - layer * 7}%)`;
+      ctx.shadowColor = `hsl(${hue + layer * 8},60%,40%)`;
+      ctx.shadowBlur = 6 - layer;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawPop(hop) {
+    ctx.save();
+    ctx.translate(hop.x, hop.y);
+    const prog = hop.popProgress;
+    for (let i = 0; i < 8; i++) {
+      ctx.save();
+      ctx.rotate((Math.PI * 2 * i) / 8);
+      ctx.beginPath();
+      ctx.arc(0, 0, 10 + prog * 30, 0, Math.PI * 2);
+      ctx.globalAlpha = 1 - prog;
+      ctx.strokeStyle = `rgba(178,255,89,${0.7 * (1 - prog)})`;
+      ctx.lineWidth = 2 + 6 * (1 - prog);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // Click to pop hop flowers
+  tile.addEventListener('click', e => {
+    const r2 = tile.getBoundingClientRect();
+    const mx = e.clientX - r2.left, my = e.clientY - r2.top;
+    for (const hop of hopFlowers) {
+      if (!hop.popped && Math.hypot(mx - hop.x, my - hop.y) < hop.r) {
+        hop.popped = true; hop.popProgress = 0;
+      }
+    }
+  });
+
+  // Mousemove spawns hop flowers
+  tile.addEventListener('mousemove', e => {
+    const r2 = tile.getBoundingClientRect();
+    spawnHopFlowers(4, e.clientX - r2.left);
+  }, {passive:true});
+  tile.addEventListener('touchmove', e => {
+    const r2 = tile.getBoundingClientRect();
+    for (const t2 of e.touches) spawnHopFlowers(4, t2.clientX - r2.left);
+  }, {passive:true});
+
+  function init() {
+    particles = [];
+    for (let i = 0; i < 80; i++) { const b = spawnBubble(); b.y = Math.random() * H; particles.push(b); }
+    for (let i = 0; i < 12; i++) { const h2 = spawnHop(); h2.y = Math.random() * H; particles.push(h2); }
+  }
+
+  function draw() {
+    fitTile(cv); W = cv.width; H = cv.height;
+    if (!particles.length) init();
+    tickT++;
+
+    // dark bottle-green bg fade
+    ctx.fillStyle = 'rgba(10,11,7,0.22)';
+    ctx.fillRect(0, 0, W, H);
+
+    // background particles — bubbles & hops
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.y -= p.speed;
+      p.anchorX += p.anchorDrift;
+      if (p.anchorX < -50) p.anchorX = W + 50;
+      if (p.anchorX > W + 50) p.anchorX = -50;
+      if (p.y < -p.r * 2) {
+        particles[i] = p.type === 'bubble' ? spawnBubble() : spawnHop();
+        continue;
+      }
+
+      const swing = Math.sin(tickT * p.swingFreq + p.phase) * p.swingAmp;
+      const dx = p.anchorX + swing, dy = p.y;
+
+      if (p.type === 'bubble') {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.strokeStyle = '#b8e04a';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(dx, dy, p.r, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = 'rgba(232,245,200,0.75)';
+        ctx.beginPath(); ctx.arc(dx - p.r * 0.3, dy - p.r * 0.32, p.r * 0.3, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.strokeStyle = '#7cb518';
+        ctx.lineWidth = 0.9;
+        ctx.beginPath(); ctx.ellipse(dx, dy, p.r * 0.55, p.r, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(dx, dy - p.r); ctx.lineTo(dx, dy + p.r); ctx.stroke();
+        ctx.globalAlpha = p.alpha * 0.4;
+        ctx.beginPath(); ctx.moveTo(dx - p.r*0.35, dy - p.r*0.4); ctx.quadraticCurveTo(dx, dy - p.r*0.1, dx + p.r*0.35, dy + p.r*0.4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(dx + p.r*0.35, dy - p.r*0.4); ctx.quadraticCurveTo(dx, dy - p.r*0.1, dx - p.r*0.35, dy + p.r*0.4); ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Hop flower rain (mouse-triggered)
+    ctx.save();
+    ctx.shadowBlur = 0;
+    for (const hop of hopFlowers) {
+      if (!hop.popped) {
+        drawHopFlower(hop, tickT);
+        hop.y += hop.speed;
+      } else {
+        drawPop(hop);
+        hop.popProgress += 0.04;
+      }
+    }
+    ctx.restore();
+    hopFlowers = hopFlowers.filter(h => (!h.popped && h.y < H + 40) || (h.popped && h.popProgress < 1));
+
+    // acid-green bottom glow
+    const grd = ctx.createRadialGradient(W/2, H, 0, W/2, H, H * 0.55);
+    grd.addColorStop(0, 'rgba(124,181,24,0.08)');
+    grd.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window.addEventListener('resize', () => { fitTile(cv); particles = []; }, {passive:true});
+})();
+
+
+/* ═══════════════════════════════════════════════
+   PRISSS — Faithful port of fractal.js
+   9 rotating patterns (click/tap to cycle):
+   0: Binary data stream rain
+   1: Julia set pixel field (mouse-reactive c param)
+   2: Rotating data paths
+   3: Sierpinski triangle
+   4: Spiral fractal branches
+   5: Mandelbrot field
+   6: Dragon curve
+   7: Barnsley fern (green)
+   8: Koch snowflake
+   + glitch effect, tempo pulse flash
+═══════════════════════════════════════════════ */
+(function(){
+  const cv = document.getElementById('c-prisss');
+  const ctx = cv.getContext('2d');
+  const tile = document.getElementById('t-prisss');
+  let W, H;
+  let mouseX = 0.5, mouseY = 0.5;
+  let time = 0, currentPattern = 0;
+  let lastGlitch = 0;
+  let reusableImgData = null;
+
+  const TEMPO = 128 / 60;
+  const PULSE_FREQ = TEMPO * 2;
+  const FADE_OPACITY = 0.03;
+
+  tile.addEventListener('mousemove', e => {
+    const r = tile.getBoundingClientRect();
+    mouseX = (e.clientX - r.left) / r.width;
+    mouseY = (e.clientY - r.top) / r.height;
+  }, {passive:true});
+  tile.addEventListener('touchmove', e => {
+    const r = tile.getBoundingClientRect();
+    mouseY = (e.touches[0].clientY - r.top) / r.height;
+    mouseX = 0.5;
+  }, {passive:true});
+  tile.addEventListener('click', () => { currentPattern = (currentPattern + 1) % 9; });
+  tile.addEventListener('touchend', () => { currentPattern = (currentPattern + 1) % 9; });
+
+  function pulseScale() { return 1 + 0.3 * Math.abs(Math.sin(time * PULSE_FREQ * Math.PI * 2)); }
+
+  function acquireImageData() {
+    if (!reusableImgData || reusableImgData.width !== W || reusableImgData.height !== H) {
+      reusableImgData = ctx.createImageData(W, H);
+    } else { reusableImgData.data.fill(0); }
+    return reusableImgData;
+  }
+
+  function drawDataStream() {
+    const density = 80 + mouseX * 60;
+    const speed = 8 + mouseY * 18;
+    const fs = 13 + pulseScale() * 8;
+    ctx.font = `${fs}px monospace`;
+    for (let i = 0; i < density; i++) {
+      const x = Math.random() * W;
+      const y = (Math.random() * H + time * speed) % H;
+      const bits = (Math.random() > 0.5 ? '1' : '0').repeat(6 + Math.floor(Math.random() * 14));
+      ctx.fillStyle = `rgba(255,255,255,${(0.35 + Math.sin(time + i) * 0.25).toFixed(2)})`;
+      ctx.fillText(bits, x, y);
+    }
+  }
+
+  function drawDataField() {
+    const id = acquireImageData(); const d = id.data;
+    const step = W < 400 ? 5 : 3;
+    const maxIter = Math.round(36 + mouseY * 8);
+    const zoom = 1.2 + mouseX * 0.6 + 0.25 * Math.sin(time * PULSE_FREQ);
+    const cX = -0.75 + mouseX * 0.25;
+    const cY = 0.2 + mouseY * 0.15;
+    for (let px = 0; px < W; px += step) {
+      for (let py = 0; py < H; py += step) {
+        let x = (px + step*0.5 - W/2) / (0.5 * zoom * W);
+        let y = (py + step*0.5 - H/2) / (0.5 * zoom * H);
+        let iter = 0;
+        while (x*x + y*y <= 4 && iter < maxIter) { const xt = x*x-y*y+cX; y=2*x*y+cY; x=xt; iter++; }
+        if (iter < maxIter) {
+          const v = 255 * (iter / maxIter * pulseScale());
+          for (let dx = 0; dx < step && px+dx < W; dx++) {
+            for (let dy = 0; dy < step && py+dy < H; dy++) {
+              const idx = ((py+dy)*W+(px+dx))*4;
+              d[idx]=v; d[idx+1]=v; d[idx+2]=v; d[idx+3]=160+v/1.5;
+            }
+          }
+        }
+      }
+    }
+    ctx.putImageData(id, 0, 0);
+  }
+
+  function drawDataPath(cx2, cy2, segs, depth, rot) {
+    ctx.save(); ctx.translate(cx2, cy2);
+    ctx.rotate(rot + Math.sin(time * TEMPO) * 0.3);
+    for (let i = 0; i < depth; i++) {
+      const len = 55 + i * 22 * pulseScale();
+      const aStep = Math.PI * 2 / segs;
+      for (let j = 0; j < segs; j++) {
+        const a = j * aStep + Math.cos(time + i) * 0.15;
+        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*len, Math.sin(a)*len);
+        ctx.strokeStyle = `rgba(255,255,255,${(0.5 - i/depth*0.4).toFixed(2)})`;
+        ctx.lineWidth = 1.5 + pulseScale()*1.5; ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawBinaryTriangle(ox, oy, size, depth) {
+    ctx.fillStyle='rgba(255,255,255,0.8)'; ctx.strokeStyle='rgba(255,255,255,0.6)'; ctx.lineWidth=pulseScale()*1.2;
+    function sier(x, y, sz, d) {
+      if (d===0||sz<2) {
+        ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+sz,y); ctx.lineTo(x+sz/2,y-sz*Math.sqrt(3)/2); ctx.closePath(); ctx.fill(); ctx.stroke(); return;
+      }
+      const hs=sz/2, hh=sz*Math.sqrt(3)/2;
+      sier(x,y,hs,d-1); sier(x+hs,y,hs,d-1); sier(x+hs/2,y-hh/2,hs,d-1);
+    }
+    sier(ox, oy, size, depth);
+  }
+
+  function drawSpiralPattern() {
+    const size = Math.min(W,H) * 0.22;
+    const maxLevel = 4 + Math.floor(mouseX * 2);
+    const scale = 0.78 + mouseY * 0.08;
+    const spread = 0.18 + mouseX * 0.18 + Math.sin(time) * 0.08;
+    const sides = Math.max(3, Math.floor(3 + mouseY * 3));
+    ctx.strokeStyle='rgba(255,255,255,0.78)'; ctx.fillStyle='rgba(255,255,255,0.78)';
+    ctx.lineWidth = Math.max(1, 3 * pulseScale());
+    function branch(level) {
+      if (level > maxLevel) return;
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(size,0); ctx.stroke();
+      if (level < maxLevel) {
+        ctx.save(); ctx.translate(size*0.12,0); ctx.scale(scale,scale); ctx.rotate(spread); branch(level+1); ctx.restore();
+        ctx.save(); ctx.translate(size*0.48,0); ctx.scale(scale,scale); ctx.rotate(spread*1.4); branch(level+1); ctx.restore();
+      }
+      ctx.beginPath(); ctx.arc(size*1.05,0,size*0.07,0,Math.PI*2); ctx.fill();
+    }
+    ctx.clearRect(0,0,W,H);
+    ctx.save(); ctx.translate(W/2,H/2);
+    for (let i=0;i<sides;i++) { ctx.rotate((Math.PI*2)/sides + time*0.09); branch(0); }
+    ctx.restore();
+  }
+
+  function drawMandelbrot() {
+    const id=acquireImageData(); const d=id.data;
+    const step=W<400?5:3, maxIter=Math.round(36+mouseY*6);
+    const zoom=1.25+mouseX*0.55+0.25*Math.sin(time*PULSE_FREQ);
+    for (let px=0;px<W;px+=step) {
+      for (let py=0;py<H;py+=step) {
+        let x0=(px+step*0.5-W/2)/(0.25*zoom*W)+mouseX*0.4-0.5;
+        let y0=(py+step*0.5-H/2)/(0.25*zoom*H)+mouseY*0.4;
+        let x=0,y=0,iter=0;
+        while(x*x+y*y<=4&&iter<maxIter){const xt=x*x-y*y+x0;y=2*x*y+y0;x=xt;iter++;}
+        if(iter<maxIter){const v=255*(iter/maxIter*pulseScale());
+          for(let dx=0;dx<step&&px+dx<W;dx++){for(let dy=0;dy<step&&py+dy<H;dy++){const idx=((py+dy)*W+(px+dx))*4;d[idx]=v;d[idx+1]=v;d[idx+2]=v;d[idx+3]=160+v/1.5;}}}
+      }
+    }
+    ctx.putImageData(id,0,0);
+  }
+
+  function drawDragonCurve() {
+    ctx.strokeStyle='rgba(255,255,255,0.78)'; ctx.lineWidth=Math.max(1.2,1.6*pulseScale());
+    ctx.beginPath();
+    let x=W/2, y=H/2, angle=0;
+    const len=3+mouseY*6, iters=Math.min(11,7+Math.floor(mouseX*3));
+    function dragon(it, dir) {
+      if(it===0){const ex=x+len*Math.cos(angle),ey=y+len*Math.sin(angle);ctx.moveTo(x,y);ctx.lineTo(ex,ey);x=ex;y=ey;return;}
+      dragon(it-1,1); angle+=dir*Math.PI/2; dragon(it-1,-1);
+    }
+    dragon(iters,1); ctx.stroke();
+  }
+
+  function drawBarnsleyFern() {
+    ctx.fillStyle='rgba(0,220,0,0.65)';
+    let x=0, y=0;
+    const pts=2500+Math.floor(mouseX*1500);
+    for(let i=0;i<pts;i++){
+      const r=Math.random(); let nx,ny;
+      if(r<0.01){nx=0;ny=0.16*y;}
+      else if(r<0.86){nx=0.85*x+0.04*y;ny=-0.04*x+0.85*y+1.6;}
+      else if(r<0.93){nx=0.2*x-0.26*y;ny=0.23*x+0.22*y+1.6;}
+      else{nx=-0.15*x+0.28*y;ny=0.26*x+0.24*y+0.44;}
+      x=nx; y=ny;
+      const px2=W/2+x*46+mouseX*70-35;
+      const py2=H-y*46-mouseY*80;
+      ctx.fillRect(px2,py2,1,1);
+    }
+  }
+
+  function drawKochSnowflake() {
+    ctx.strokeStyle='rgba(255,255,255,0.78)'; ctx.lineWidth=1;
+    const size=Math.min(W,H)*0.26, iters=Math.max(1,Math.min(4,3+Math.floor(mouseX*1.5)));
+    const angle=time*0.08;
+    function koch(x1,y1,x2,y2,it){
+      if(it===0){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();return;}
+      const dx=x2-x1,dy=y2-y1;
+      const x3=x1+dx/3,y3=y1+dy/3,x4=x1+2*dx/3,y4=y1+2*dy/3;
+      const x5=x3+(x4-x3)*Math.cos(Math.PI/3)-(y4-y3)*Math.sin(Math.PI/3);
+      const y5=y3+(x4-x3)*Math.sin(Math.PI/3)+(y4-y3)*Math.cos(Math.PI/3);
+      koch(x1,y1,x3,y3,it-1);koch(x3,y3,x5,y5,it-1);koch(x5,y5,x4,y4,it-1);koch(x4,y4,x2,y2,it-1);
+    }
+    for(let i=0;i<3;i++){
+      const a1=angle+(i*2*Math.PI)/3, a2=angle+((i+1)*2*Math.PI)/3;
+      koch(W/2+size*Math.cos(a1),H/2+size*Math.sin(a1),W/2+size*Math.cos(a2),H/2+size*Math.sin(a2),iters);
+    }
+  }
+
+  function applyGlitch() {
+    const now = performance.now();
+    if (now - lastGlitch < 300) return;
+    lastGlitch = now;
+    const id2 = ctx.getImageData(0,0,W,H); const d=id2.data;
+    // slice shift
+    for(let s=0;s<2;s++){
+      const sy=Math.floor(Math.random()*H), sh=Math.floor(10+Math.random()*14);
+      const shift=Math.floor(-22+Math.random()*44);
+      for(let y2=sy;y2<sy+sh&&y2<H;y2++){for(let x2=0;x2<W;x2++){const oi=(y2*W+x2)*4,ni=(y2*W+(x2+shift+W)%W)*4;d[ni]=d[oi];d[ni+1]=d[oi+1];d[ni+2]=d[oi+2];d[ni+3]=d[oi+3];}}
+    }
+    // noise
+    for(let i=0;i<d.length;i+=4){if(Math.random()<0.003){const n=Math.floor(-28+Math.random()*56);d[i]=Math.max(0,Math.min(255,d[i]+n));d[i+1]=Math.max(0,Math.min(255,d[i+1]+n));d[i+2]=Math.max(0,Math.min(255,d[i+2]+n));}}
+    ctx.putImageData(id2,0,0);
+  }
+
+  let lastTS = performance.now();
+  function draw(ts) {
+    requestAnimationFrame(draw);
+    fitTile(cv); W=cv.width; H=cv.height;
+    const delta = Math.min(ts - lastTS, 100); lastTS = ts;
+    time += delta * 0.00125;
+
+    ctx.fillStyle=`rgba(0,0,0,${FADE_OPACITY})`; ctx.fillRect(0,0,W,H);
+
+    // Tempo flash
+    if(Math.sin(time*PULSE_FREQ*Math.PI*2) > 0.9){ctx.fillStyle='rgba(255,255,255,0.15)';ctx.fillRect(0,0,W,H);}
+
+    switch(currentPattern){
+      case 0: drawDataStream(); break;
+      case 1: drawDataField(); break;
+      case 2: {
+        const cnt=3+Math.floor(mouseY*2), segs=Math.max(10,Math.floor(12+mouseX*8));
+        for(let i=0;i<cnt;i++){const px2=W/2+Math.sin(time*TEMPO+i)*W*0.16,py2=H/2+Math.cos(time*TEMPO+i)*H*0.16;drawDataPath(px2,py2,segs,5,time*TEMPO/2);}break;
+      }
+      case 3: {
+        const sz=Math.min(W,H)*0.4, ox=W/2-sz/2, oy=H/2+sz*0.28;
+        drawBinaryTriangle(ox,oy,sz,4);
+        ctx.save();ctx.translate(W/2,H/2);ctx.rotate(time*TEMPO/3);ctx.translate(-W/2,-H/2);
+        drawBinaryTriangle(ox,oy,sz*0.65,3);ctx.restore();break;
+      }
+      case 4: drawSpiralPattern(); break;
+      case 5: drawMandelbrot(); break;
+      case 6: drawDragonCurve(); break;
+      case 7: drawBarnsleyFern(); break;
+      case 8: drawKochSnowflake(); break;
+    }
+
+    if(Math.sin(time*(TEMPO*4)*Math.PI*2)>0.95) applyGlitch();
+  }
+  requestAnimationFrame(draw);
+  window.addEventListener('resize', () => { fitTile(cv); reusableImgData=null; }, {passive:true});
 })();
 
 </script>
