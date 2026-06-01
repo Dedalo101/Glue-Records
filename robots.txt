@@ -1,0 +1,21 @@
+# robots.txt — gluerecords.club
+# https://www.robotstxt.org/
+
+User-agent: *
+Allow: /
+
+# Point crawlers to the sitemap
+Sitemap: https://gluerecords.club/sitemap.xml
+
+# Block AI training crawlers (optional but common for artist sites)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
