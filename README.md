@@ -27,31 +27,6 @@
 └── README.md         This file
 ```
 
-## Deploy (GitHub Pages)
-
-1. Push to the `main` branch of `Dedalo101/Glue-Records`
-2. Go to **Settings → Pages → Source**: set to `Deploy from branch`, branch `main`, folder `/ (root)`
-3. Add custom domain `gluerecords.club` in the Pages settings
-4. In your DNS (Cloudflare), point the apex domain to GitHub Pages IPs and `www` CNAME to `dedalo101.github.io`
-
-GitHub Pages IPs (A records):
-```
-185.199.108.153
-185.199.109.153
-185.199.110.153
-185.199.111.153
-```
-
-AAAA records:
-```
-2606:50c0:8000::153
-2606:50c0:8001::153
-2606:50c0:8002::153
-2606:50c0:8003::153
-```
-
-## After deploy — submit to Google
-
 1. Open [Google Search Console](https://search.google.com/search-console)
 2. Add property → URL prefix → `https://gluerecords.club/`
 3. Verify via the HTML meta tag method (add the tag to the `<head>` of index.html)
