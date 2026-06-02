@@ -1,7 +1,10 @@
 # Glue Records — gluerecords.club
 
-> Sello independiente de música electrónica underground · Málaga, España  
-> Independent underground electronic music label · Málaga, Spain
+Glue Records is an independent underground electronic music label founded in 2024, operating between Málaga, Spain and Amsterdam.
+We exist to champion raw, ritualistic, and boundary-pushing electronic music — from analog techno and cosmic grooves to industrial hard techno and experimental electronics. Our roster is built on artists who treat sound as ceremony rather than entertainment.
+With a focus on vinyl culture, live performances, and carefully curated nights, Glue Records creates spaces where the underground can breathe and evolve. Our events and releases are designed to reconnect music with its most primal and infinite forms.
+This is where the glue is applied.
+
 
 ## Artists
 
