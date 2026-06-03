@@ -10,14 +10,15 @@ This is where the glue is applied.
 
 | Artist | Site | Genre |
 |---|---|---|
-| Nahuel | [nahuel.club](https://nahuel.club) | Techno · Analog |
-| Amoro | [amoro.club](https://amoro.club) | Electronic · Experimental |
-| Kamaleonica | [kamaleonica.com](https://kamaleonica.com) | Techno · Cosmic |
-| Benny Yasoto | [bennyasoto.com](https://bennyasoto.com) | Hard Techno · Raw |
-| Breaking Robots | [breakingrobots.com](https://breakingrobots.com) | Glitch · Noise |
+| Nahuel | [nahuel.club](https://nahuel.club) | Techno · Analog · Mix-media Sculpture |
+| Amoro | [amoro.club](https://amoro.club) | Electronic · Techno |
+| Kamaleonica | [kamaleonica.com](https://kamaleonica.com) | Techno · Cosmic · |
+| Benny Yasoto | [bennyasoto.com](https://bennyasoto.com) | Hard Techno · Electro |
+| Breaking Robots | [breakingrobots.com](https://breakingrobots.com) | Glitch · Noise · Experimental |
 | Foreverness | [foreverness.club](https://foreverness.club) | Electronic · Art |
-| DJ Hoppi | [djhoppi.club](https://djhoppi.club) | Techno |
-| Prisss | [prisss.com](https://prisss.com) | Techno · Selector |
+| DJ Hoppi | [djhoppi.club](https://djhoppi.club) | Avant-Garde · Electronic |
+| Prisss | [prisss.com](https://prisss.com) | Electronic · Selector |
+| Edomite | [Edomite.club](https://edomite.club) | Deep House · Progressive · Selector |
 
 ## Repo structure
 
