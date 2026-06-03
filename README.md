@@ -27,6 +27,7 @@ This is where the glue is applied.
 ├── og-image.png      Open Graph preview image (1200×630px)
 ├── robots.txt        Search crawler instructions
 ├── sitemap.xml       XML sitemap for Google Search Console
+└── AGENTS.md         Agentic loggings
 └── README.md         This file
 ```
 
