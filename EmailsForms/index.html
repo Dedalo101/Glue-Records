@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GLUE RECORDS — Secret Event Registration</title>
+  <meta name="description" content="Register for exclusive Glue Records events. Tell us who you are, how to reach you, and which DJs from the line-up you're most excited about.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#050505">
+  <meta property="og:title" content="GLUE RECORDS — Secret Event Registration">
+  <meta property="og:description" content="Exclusive access registration for Glue Records events.">
+  <meta property="og:image" content="https://gluerecords.club/EmailsForms/glue-records-bg.jpg">
+  <meta property="og:url" content="https://gluerecords.club/EmailsForms/">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #fff;
+      background: #050505 url('glue-records-bg.jpg') center top / cover no-repeat fixed;
+    }
+    .page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px 56px;
+      background: linear-gradient(180deg, rgba(5,5,5,0.35) 0%, rgba(5,5,5,0.72) 55%, rgba(5,5,5,0.92) 100%);
+    }
+    .shell { width: 100%; max-width: 560px; }
+    .header { text-align: center; margin-bottom: 28px; }
+    .eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.72);
+    }
+    .title {
+      margin-top: 10px;
+      font-size: clamp(24px, 5vw, 32px);
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(255,255,255,0.35);
+    }
+    .subtitle {
+      margin-top: 8px;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.85);
+    }
+    .lead {
+      margin-top: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.78);
+    }
+    .panel {
+      background: rgba(6,6,10,0.84);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      padding: 32px 28px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+    }
+    .section-title {
+      margin: 8px 0 12px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #d4a03a;
+    }
+    .section-title:first-child { margin-top: 0; }
+    .field { margin-bottom: 16px; }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="url"],
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 4px;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    textarea { resize: vertical; min-height: 120px; }
+    input:focus, textarea:focus {
+      outline: 2px solid #d4a03a;
+      outline-offset: 2px;
+    }
+    .hint {
+      margin-top: 6px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+    }
+    .radio-group, .checkbox-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 18px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .radio-group label, .checkbox-wrap label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: none;
+      letter-spacing: normal;
+      color: #fff;
+      cursor: pointer;
+      margin: 0;
+      font-size: 14px;
+    }
+    .radio-group input, .checkbox-wrap input {
+      width: 1rem;
+      height: 1rem;
+      accent-color: #d4a03a;
+    }
+    .loop-box {
+      background: rgba(212,160,58,0.08);
+      border: 1px solid rgba(212,160,58,0.28);
+      border-radius: 4px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+    }
+    .loop-box strong { color: #d4a03a; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px 36px;
+      border: none;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #e8c56a 0%, #c8922a 100%);
+      color: #0a0a0a;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(200,146,42,0.35);
+    }
+    .btn:disabled { opacity: 0.65; cursor: wait; }
+    .status {
+      display: none;
+      margin-bottom: 20px;
+      padding: 16px;
+      border-radius: 4px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .status.is-visible { display: block; }
+    .status--success {
+      background: rgba(80,160,80,0.12);
+      border: 1px solid rgba(80,160,80,0.35);
+      color: rgba(255,255,255,0.92);
+    }
+    .status--error {
+      background: rgba(180,60,60,0.12);
+      border: 1px solid rgba(220,100,100,0.35);
+      color: rgba(255,255,255,0.92);
+    }
+    .status a { color: #e8c56a; }
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+    .footer a { color: rgba(255,255,255,0.55); text-decoration: none; }
+    @media (max-width: 620px) {
+      .field-row { grid-template-columns: 1fr; }
+      .panel { padding: 24px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="shell">
+      <header class="header">
+        <p class="eyebrow">Exclusive access</p>
+        <h1 class="title">GLUE RECORDS</h1>
+        <p class="subtitle">Secret Event Registration</p>
+        <p class="lead">Complete the form below to join us. Tell us who you are, how to reach you, and which DJs from the line-up you're most excited about.</p>
+      </header>
+
+      <div class="panel">
+        <div class="status status--success" id="form-success" role="status" aria-live="polite">
+          <p>Thank you — we received your registration. We'll be in touch soon.</p>
+          <p><a href="https://gluerecords.club/">Back to Glue Records</a></p>
+        </div>
+        <div class="status status--error" id="form-error" role="alert">
+          <p>We couldn't send your registration. Please try again or email <a href="mailto:info@gluerecords.club">info@gluerecords.club</a>.</p>
+        </div>
+
+        <form id="registration-form" action="https://formspree.io/f/mwvjqole" method="POST">
+          <input type="hidden" name="_subject" value="GLUE RECORDS — Secret Event Registration">
+
+          <p class="section-title">Personal details</p>
+          <div class="field">
+            <label for="nombre">Name (as on ID)</label>
+            <input type="text" id="nombre" name="nombre" required autocomplete="name" placeholder="Full legal name">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="telefono">Phone number</label>
+              <input type="tel" id="telefono" name="telefono" required autocomplete="tel" placeholder="+34 …">
+            </div>
+            <div class="field">
+              <label for="email">Email address</label>
+              <input type="email" id="email" name="email" required autocomplete="email" placeholder="you@email.com">
+            </div>
+          </div>
+
+          <p class="section-title">Preferred way to contact</p>
+          <div class="radio-group" style="margin-bottom:20px;">
+            <label><input type="radio" name="contacto_preferido" value="Email" required> Email</label>
+            <label><input type="radio" name="contacto_preferido" value="Phone"> Phone</label>
+            <label><input type="radio" name="contacto_preferido" value="Telegram"> Telegram</label>
+            <label><input type="radio" name="contacto_preferido" value="WhatsApp"> WhatsApp</label>
+          </div>
+
+          <p class="section-title">Social links</p>
+          <div class="field">
+            <label for="facebook">Facebook</label>
+            <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/…">
+          </div>
+          <div class="field">
+            <label for="instagram">Instagram</label>
+            <input type="url" id="instagram" name="instagram" placeholder="https://instagram.com/…">
+          </div>
+          <div class="field">
+            <label for="resident_advisor">Resident Advisor</label>
+            <input type="url" id="resident_advisor" name="resident_advisor" placeholder="https://ra.co/…">
+          </div>
+
+          <p class="section-title">Are you a DJ or Promoter?</p>
+          <div class="radio-group" style="margin-bottom:16px;">
+            <label><input type="radio" name="rol" value="DJ" required> DJ</label>
+            <label><input type="radio" name="rol" value="Promoter"> Promoter</label>
+            <label><input type="radio" name="rol" value="Both"> Both</label>
+            <label><input type="radio" name="rol" value="Neither"> Neither</label>
+          </div>
+          <div class="field">
+            <label for="ra_co_id">RA.co ID</label>
+            <input type="text" id="ra_co_id" name="ra_co_id" placeholder="Your RA username or profile URL">
+            <p class="hint">Optional — if you have a Resident Advisor profile.</p>
+          </div>
+
+          <p class="section-title">About you</p>
+          <div class="field">
+            <label for="sobre_ti">Tell us about yourself &amp; which DJs from our line-up interest you most</label>
+            <textarea id="sobre_ti" name="sobre_ti" placeholder="A bit about you, your scene, and the DJs you're most excited to hear…"></textarea>
+          </div>
+
+          <div class="loop-box checkbox-wrap">
+            <label>
+              <input type="checkbox" name="be_in_the_loop" value="Yes — keep me in the loop for future events">
+              <span><strong>Be in the Loop!</strong> — We will contact you about future events.</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn" id="submit-btn">Submit registration</button>
+        </form>
+      </div>
+
+      <p class="footer">© GLUE RECORDS · <a href="https://gluerecords.club/">gluerecords.club</a></p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var form = document.getElementById('registration-form');
+      var successEl = document.getElementById('form-success');
+      var errorEl = document.getElementById('form-error');
+      var submitBtn = document.getElementById('submit-btn');
+      var defaultText = submitBtn.textContent;
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        errorEl.classList.remove('is-visible');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending…';
+
+        try {
+          var res = await fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { Accept: 'application/json' },
+          });
+
+          if (res.ok) {
+            form.hidden = true;
+            successEl.classList.add('is-visible');
+            return;
+          }
+          errorEl.classList.add('is-visible');
+        } catch (_err) {
+          errorEl.classList.add('is-visible');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = defaultText;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
