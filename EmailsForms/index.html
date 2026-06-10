@@ -183,31 +183,23 @@
     .social-section {
       margin-bottom: 20px;
       padding: 18px 16px;
-      border: 1px solid rgba(220, 70, 70, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 6px;
-      background: rgba(120, 20, 20, 0.28);
-      box-shadow: inset 0 0 24px rgba(180, 30, 30, 0.12);
+      background: rgba(0, 0, 0, 0.2);
     }
-    .social-section .section-title {
-      color: #ff5c5c;
-      margin-top: 0;
-    }
-    .social-section label {
-      color: rgba(255, 180, 180, 0.9);
-    }
-    .social-section input {
-      border-color: rgba(220, 90, 90, 0.45);
-    }
-    .social-section input:focus {
-      outline-color: #ff5c5c;
-    }
-    .social-section .hint {
-      color: rgba(255, 140, 140, 0.85);
-    }
+    .social-section .section-title { margin-top: 0; }
     .social-section.is-invalid {
       border-color: #ff3b3b;
-      box-shadow: 0 0 0 1px rgba(255, 59, 59, 0.35);
+      background: rgba(120, 20, 20, 0.28);
+      box-shadow: 0 0 0 1px rgba(255, 59, 59, 0.35), inset 0 0 24px rgba(180, 30, 30, 0.12);
     }
+    .social-section.is-invalid .section-title { color: #ff5c5c; }
+    .social-section.is-invalid label { color: rgba(255, 180, 180, 0.9); }
+    .social-section.is-invalid input {
+      border-color: rgba(220, 90, 90, 0.45);
+    }
+    .social-section.is-invalid input:focus { outline-color: #ff5c5c; }
+    .social-section.is-invalid .hint { color: rgba(255, 140, 140, 0.85); }
     .footer {
       margin-top: 24px;
       text-align: center;
@@ -270,8 +262,8 @@
           </div>
 
           <div class="social-section" id="social-section">
-            <p class="section-title">Social links — at least one required</p>
-            <p class="hint" style="margin-bottom:14px;">Add Facebook, Instagram, Mixcloud, or SoundCloud so we can find you.</p>
+            <p class="section-title">Social links</p>
+            <p class="hint" style="margin-bottom:14px;">Add at least one: Facebook, Instagram, Mixcloud, or SoundCloud.</p>
             <div class="field">
               <label for="facebook">Facebook</label>
               <input type="url" id="facebook" name="facebook" class="social-input" placeholder="https://facebook.com/…">
@@ -317,7 +309,7 @@
             </label>
           </div>
 
-          <button type="submit" class="btn" id="submit-btn" disabled>Submit registration</button>
+          <button type="submit" class="btn" id="submit-btn">Submit registration</button>
         </form>
       </div>
 
@@ -342,24 +334,26 @@
         });
       }
 
-      function updateSocialState() {
-        var ok = hasSocialLink();
-        submitBtn.disabled = !ok;
-        socialSection.classList.toggle('is-invalid', !ok);
-        socialError.hidden = ok;
+      function setSocialInvalid(invalid) {
+        socialSection.classList.toggle('is-invalid', invalid);
+        socialError.hidden = !invalid;
       }
 
       socialInputs.forEach(function (input) {
-        input.addEventListener('input', updateSocialState);
-        input.addEventListener('blur', updateSocialState);
+        input.addEventListener('input', function () {
+          if (hasSocialLink()) setSocialInvalid(false);
+        });
       });
-      updateSocialState();
 
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
         errorEl.classList.remove('is-visible');
-        updateSocialState();
-        if (!hasSocialLink()) return;
+        if (!hasSocialLink()) {
+          setSocialInvalid(true);
+          socialSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        setSocialInvalid(false);
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'Sending…';
@@ -380,8 +374,8 @@
         } catch (_err) {
           errorEl.classList.add('is-visible');
         } finally {
+          submitBtn.disabled = false;
           submitBtn.textContent = defaultText;
-          updateSocialState();
         }
       });
     })();
