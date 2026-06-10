@@ -215,17 +215,32 @@
       color: rgba(255,255,255,0.45);
     }
     .footer a { color: rgba(255,255,255,0.55); text-decoration: none; }
-    .audio-player,
-    .audio-player iframe {
-      position: fixed !important;
-      width: 0 !important;
-      height: 0 !important;
-      border: 0 !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-      overflow: hidden !important;
-      clip: rect(0, 0, 0, 0) !important;
+    .splash-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      cursor: pointer;
+      border: 0;
+      padding: 0;
+      background: #050505;
+    }
+    .splash-overlay.is-hidden { display: none; }
+    .splash-overlay__image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      pointer-events: none;
+    }
+    .audio-player {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 200px;
+      height: 200px;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
     }
     .audio-toggle {
       display: none;
@@ -258,6 +273,10 @@
 <body>
   <div id="yt-player" class="audio-player" aria-hidden="true"></div>
   <button type="button" id="audio-toggle" class="audio-toggle" aria-label="Pause music">(pause)</button>
+
+  <button type="button" id="splash-overlay" class="splash-overlay is-hidden" aria-label="Enter registration">
+    <img src="glue-records-bg.jpg" alt="" class="splash-overlay__image">
+  </button>
 
   <div class="page">
     <div class="shell">
@@ -363,22 +382,23 @@
   <script>
     (function () {
       var VIDEO_ID = 'JhQMeBecAWI';
-      var shouldContinue = sessionStorage.getItem('glueAudioContinue') === '1';
-      if (!shouldContinue) return;
+      var params = new URLSearchParams(window.location.search);
+      var showOverlay = params.has('splash');
+      var audioActive = showOverlay || sessionStorage.getItem('glueAudioActive') === '1';
+      if (!audioActive) return;
 
       var player;
-      var unmuted = sessionStorage.getItem('glueAudioUnmuted') === '1';
+      var playerReady = false;
+      var wantsSound = false;
       var playing = sessionStorage.getItem('glueAudioPaused') !== '1';
+      var overlay = document.getElementById('splash-overlay');
       var toggleBtn = document.getElementById('audio-toggle');
 
-      toggleBtn.classList.add('is-active');
-
-      function enableSound() {
-        if (!player || unmuted || typeof player.unMute !== 'function') return;
-        unmuted = true;
-        sessionStorage.setItem('glueAudioUnmuted', '1');
-        player.unMute();
-        player.setVolume(100);
+      if (showOverlay) {
+        overlay.classList.remove('is-hidden');
+      } else {
+        overlay.classList.add('is-hidden');
+        toggleBtn.classList.add('is-active');
       }
 
       function setPlayingState(isPlaying) {
@@ -388,10 +408,37 @@
         toggleBtn.setAttribute('aria-label', isPlaying ? 'Pause music' : 'Play music');
       }
 
+      function enableSound() {
+        wantsSound = true;
+        if (!playerReady || typeof player.unMute !== 'function') return;
+        player.unMute();
+        player.setVolume(100);
+      }
+
+      function startPlayback() {
+        wantsSound = true;
+        sessionStorage.setItem('glueAudioActive', '1');
+        toggleBtn.classList.add('is-active');
+        if (!playerReady) return;
+        enableSound();
+        player.playVideo();
+        setPlayingState(true);
+      }
+
+      function enterSite() {
+        startPlayback();
+        overlay.classList.add('is-hidden');
+        if (params.has('splash')) {
+          history.replaceState(null, '', window.location.pathname);
+        }
+      }
+
+      overlay.addEventListener('click', enterSite);
+
       toggleBtn.addEventListener('click', function (event) {
         event.preventDefault();
         event.stopPropagation();
-        if (!player || typeof player.pauseVideo !== 'function') return;
+        if (!playerReady || typeof player.pauseVideo !== 'function') return;
 
         if (playing) {
           player.pauseVideo();
@@ -399,17 +446,10 @@
           return;
         }
 
-        player.playVideo();
-        enableSound();
-        setPlayingState(true);
+        startPlayback();
       });
 
       setPlayingState(playing);
-
-      document.addEventListener('pointerdown', function (event) {
-        if (event.target === toggleBtn) return;
-        enableSound();
-      }, { once: true });
 
       var tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
@@ -417,15 +457,16 @@
 
       window.onYouTubeIframeAPIReady = function () {
         player = new YT.Player('yt-player', {
-          height: '1',
-          width: '1',
+          height: '200',
+          width: '200',
           videoId: VIDEO_ID,
           playerVars: {
-            autoplay: 1,
+            autoplay: 0,
             loop: 1,
             playlist: VIDEO_ID,
             controls: 0,
             disablekb: 1,
+            enablejsapi: 1,
             fs: 0,
             modestbranding: 1,
             playsinline: 1,
@@ -434,16 +475,10 @@
             origin: window.location.origin
           },
           events: {
-            onReady: function (event) {
-              var canPlayWithSound = navigator.userActivation
-                && (navigator.userActivation.isActive || navigator.userActivation.hasBeenActive);
-
-              if (!unmuted && !canPlayWithSound) event.target.mute();
-              if (playing) {
-                event.target.playVideo();
-                if (unmuted || canPlayWithSound) enableSound();
-              } else {
-                event.target.pauseVideo();
+            onReady: function () {
+              playerReady = true;
+              if (!showOverlay && playing) {
+                startPlayback();
               }
             }
           }
