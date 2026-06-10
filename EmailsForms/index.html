@@ -384,12 +384,8 @@
       var VIDEO_ID = 'JhQMeBecAWI';
       var params = new URLSearchParams(window.location.search);
       var showOverlay = params.has('splash');
-      var audioActive = showOverlay || sessionStorage.getItem('glueAudioActive') === '1';
-      if (!audioActive) return;
-
       var player;
       var playerReady = false;
-      var wantsSound = false;
       var playing = sessionStorage.getItem('glueAudioPaused') !== '1';
       var overlay = document.getElementById('splash-overlay');
       var toggleBtn = document.getElementById('audio-toggle');
@@ -409,14 +405,13 @@
       }
 
       function enableSound() {
-        wantsSound = true;
         if (!playerReady || typeof player.unMute !== 'function') return;
         player.unMute();
         player.setVolume(100);
+        sessionStorage.setItem('glueAudioActive', '1');
       }
 
       function startPlayback() {
-        wantsSound = true;
         sessionStorage.setItem('glueAudioActive', '1');
         toggleBtn.classList.add('is-active');
         if (!playerReady) return;
@@ -449,7 +444,12 @@
         startPlayback();
       });
 
-      setPlayingState(playing);
+      if (!showOverlay) {
+        playing = false;
+        setPlayingState(false);
+      } else {
+        setPlayingState(playing);
+      }
 
       var tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
@@ -477,9 +477,6 @@
           events: {
             onReady: function () {
               playerReady = true;
-              if (!showOverlay && playing) {
-                startPlayback();
-              }
             }
           }
         });
