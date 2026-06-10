@@ -33,13 +33,75 @@
       display: block;
       border: 0;
     }
+    .audio-player {
+      position: fixed;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+      left: -9999px;
+    }
   </style>
 </head>
 <body>
 
+  <div id="yt-player" class="audio-player" aria-hidden="true"></div>
+
   <a href="index.html" style="text-decoration: none;">
     <img src="glue-records-bg.jpg" alt="GLUE RECORDS — click to register" class="full-screen-image">
   </a>
+
+  <script>
+    (function () {
+      var VIDEO_ID = 'JhQMeBecAWI';
+      var player;
+      var unmuted = false;
+
+      function enableSound() {
+        if (!player || unmuted || typeof player.unMute !== 'function') return;
+        unmuted = true;
+        player.unMute();
+        player.setVolume(100);
+      }
+
+      document.addEventListener('pointerdown', enableSound, { once: true });
+
+      var tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+
+      window.onYouTubeIframeAPIReady = function () {
+        player = new YT.Player('yt-player', {
+          height: '1',
+          width: '1',
+          videoId: VIDEO_ID,
+          playerVars: {
+            autoplay: 1,
+            loop: 1,
+            playlist: VIDEO_ID,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            rel: 0,
+            origin: window.location.origin
+          },
+          events: {
+            onReady: function (event) {
+              var canPlayWithSound = navigator.userActivation
+                && (navigator.userActivation.isActive || navigator.userActivation.hasBeenActive);
+
+              if (!canPlayWithSound) event.target.mute();
+              event.target.playVideo();
+              if (canPlayWithSound) enableSound();
+            }
+          }
+        });
+      };
+    })();
+  </script>
 
 </body>
 </html>
