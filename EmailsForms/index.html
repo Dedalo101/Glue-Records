@@ -180,6 +180,34 @@
       color: rgba(255,255,255,0.92);
     }
     .status a { color: #e8c56a; }
+    .social-section {
+      margin-bottom: 20px;
+      padding: 18px 16px;
+      border: 1px solid rgba(220, 70, 70, 0.55);
+      border-radius: 6px;
+      background: rgba(120, 20, 20, 0.28);
+      box-shadow: inset 0 0 24px rgba(180, 30, 30, 0.12);
+    }
+    .social-section .section-title {
+      color: #ff5c5c;
+      margin-top: 0;
+    }
+    .social-section label {
+      color: rgba(255, 180, 180, 0.9);
+    }
+    .social-section input {
+      border-color: rgba(220, 90, 90, 0.45);
+    }
+    .social-section input:focus {
+      outline-color: #ff5c5c;
+    }
+    .social-section .hint {
+      color: rgba(255, 140, 140, 0.85);
+    }
+    .social-section.is-invalid {
+      border-color: #ff3b3b;
+      box-shadow: 0 0 0 1px rgba(255, 59, 59, 0.35);
+    }
     .footer {
       margin-top: 24px;
       text-align: center;
@@ -241,18 +269,26 @@
             <label><input type="radio" name="contacto_preferido" value="WhatsApp"> WhatsApp</label>
           </div>
 
-          <p class="section-title">Social links</p>
-          <div class="field">
-            <label for="facebook">Facebook</label>
-            <input type="url" id="facebook" name="facebook" placeholder="https://facebook.com/…">
-          </div>
-          <div class="field">
-            <label for="instagram">Instagram</label>
-            <input type="url" id="instagram" name="instagram" placeholder="https://instagram.com/…">
-          </div>
-          <div class="field">
-            <label for="resident_advisor">Resident Advisor</label>
-            <input type="url" id="resident_advisor" name="resident_advisor" placeholder="https://ra.co/…">
+          <div class="social-section" id="social-section">
+            <p class="section-title">Social links — at least one required</p>
+            <p class="hint" style="margin-bottom:14px;">Add Facebook, Instagram, Mixcloud, or SoundCloud so we can find you.</p>
+            <div class="field">
+              <label for="facebook">Facebook</label>
+              <input type="url" id="facebook" name="facebook" class="social-input" placeholder="https://facebook.com/…">
+            </div>
+            <div class="field">
+              <label for="instagram">Instagram</label>
+              <input type="url" id="instagram" name="instagram" class="social-input" placeholder="https://instagram.com/…">
+            </div>
+            <div class="field">
+              <label for="mixcloud">Mixcloud</label>
+              <input type="url" id="mixcloud" name="mixcloud" class="social-input" placeholder="https://mixcloud.com/…">
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label for="soundcloud">SoundCloud</label>
+              <input type="url" id="soundcloud" name="soundcloud" class="social-input" placeholder="https://soundcloud.com/…">
+            </div>
+            <p class="hint" id="social-error" hidden role="alert" style="margin-top:12px; margin-bottom:0;">Please add at least one social link before submitting.</p>
           </div>
 
           <p class="section-title">Are you a DJ or Promoter?</p>
@@ -281,7 +317,7 @@
             </label>
           </div>
 
-          <button type="submit" class="btn" id="submit-btn">Submit registration</button>
+          <button type="submit" class="btn" id="submit-btn" disabled>Submit registration</button>
         </form>
       </div>
 
@@ -295,11 +331,36 @@
       var successEl = document.getElementById('form-success');
       var errorEl = document.getElementById('form-error');
       var submitBtn = document.getElementById('submit-btn');
+      var socialSection = document.getElementById('social-section');
+      var socialError = document.getElementById('social-error');
+      var socialInputs = Array.prototype.slice.call(document.querySelectorAll('.social-input'));
       var defaultText = submitBtn.textContent;
+
+      function hasSocialLink() {
+        return socialInputs.some(function (input) {
+          return input.value.trim().length > 0;
+        });
+      }
+
+      function updateSocialState() {
+        var ok = hasSocialLink();
+        submitBtn.disabled = !ok;
+        socialSection.classList.toggle('is-invalid', !ok);
+        socialError.hidden = ok;
+      }
+
+      socialInputs.forEach(function (input) {
+        input.addEventListener('input', updateSocialState);
+        input.addEventListener('blur', updateSocialState);
+      });
+      updateSocialState();
 
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
         errorEl.classList.remove('is-visible');
+        updateSocialState();
+        if (!hasSocialLink()) return;
+
         submitBtn.disabled = true;
         submitBtn.textContent = 'Sending…';
 
@@ -319,8 +380,8 @@
         } catch (_err) {
           errorEl.classList.add('is-visible');
         } finally {
-          submitBtn.disabled = false;
           submitBtn.textContent = defaultText;
+          updateSocialState();
         }
       });
     })();
