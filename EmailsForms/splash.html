@@ -73,7 +73,7 @@
 
   <button type="button" id="audio-toggle" class="audio-toggle" aria-label="Pause music">(pause)</button>
 
-  <a href="index.html" style="text-decoration: none;">
+  <a href="index.html" id="splash-link" style="text-decoration: none;">
     <img src="glue-records-bg.jpg" alt="GLUE RECORDS — click to register" class="full-screen-image">
   </a>
 
@@ -112,6 +112,12 @@
         player.playVideo();
         enableSound();
         setPlayingState(true);
+      });
+
+      document.getElementById('splash-link').addEventListener('click', function () {
+        sessionStorage.setItem('glueAudioContinue', '1');
+        sessionStorage.setItem('glueAudioPaused', playing ? '0' : '1');
+        sessionStorage.setItem('glueAudioUnmuted', unmuted ? '1' : '0');
       });
 
       document.addEventListener('pointerdown', function (event) {

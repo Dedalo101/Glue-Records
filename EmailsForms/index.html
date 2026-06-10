@@ -215,6 +215,40 @@
       color: rgba(255,255,255,0.45);
     }
     .footer a { color: rgba(255,255,255,0.55); text-decoration: none; }
+    .audio-player,
+    .audio-player iframe {
+      position: fixed !important;
+      width: 0 !important;
+      height: 0 !important;
+      border: 0 !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+    }
+    .audio-toggle {
+      display: none;
+      position: fixed;
+      right: max(16px, env(safe-area-inset-right));
+      bottom: max(16px, env(safe-area-inset-bottom));
+      z-index: 100;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(5, 5, 5, 0.55);
+      color: rgba(255, 255, 255, 0.72);
+      font: 11px/1 Arial, Helvetica, sans-serif;
+      letter-spacing: 0.14em;
+      padding: 8px 12px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+    .audio-toggle.is-active { display: block; }
+    .audio-toggle:hover,
+    .audio-toggle:focus-visible {
+      color: #d4a03a;
+      border-color: rgba(212, 160, 58, 0.45);
+      outline: none;
+    }
     @media (max-width: 620px) {
       .field-row { grid-template-columns: 1fr; }
       .panel { padding: 24px 18px; }
@@ -222,6 +256,9 @@
   </style>
 </head>
 <body>
+  <div id="yt-player" class="audio-player" aria-hidden="true"></div>
+  <button type="button" id="audio-toggle" class="audio-toggle" aria-label="Pause music">(pause)</button>
+
   <div class="page">
     <div class="shell">
       <header class="header">
@@ -322,6 +359,98 @@
       <p class="footer">© GLUE RECORDS · <a href="https://gluerecords.club/">gluerecords.club</a></p>
     </div>
   </div>
+
+  <script>
+    (function () {
+      var VIDEO_ID = 'JhQMeBecAWI';
+      var shouldContinue = sessionStorage.getItem('glueAudioContinue') === '1';
+      if (!shouldContinue) return;
+
+      var player;
+      var unmuted = sessionStorage.getItem('glueAudioUnmuted') === '1';
+      var playing = sessionStorage.getItem('glueAudioPaused') !== '1';
+      var toggleBtn = document.getElementById('audio-toggle');
+
+      toggleBtn.classList.add('is-active');
+
+      function enableSound() {
+        if (!player || unmuted || typeof player.unMute !== 'function') return;
+        unmuted = true;
+        sessionStorage.setItem('glueAudioUnmuted', '1');
+        player.unMute();
+        player.setVolume(100);
+      }
+
+      function setPlayingState(isPlaying) {
+        playing = isPlaying;
+        sessionStorage.setItem('glueAudioPaused', isPlaying ? '0' : '1');
+        toggleBtn.textContent = isPlaying ? '(pause)' : '(play)';
+        toggleBtn.setAttribute('aria-label', isPlaying ? 'Pause music' : 'Play music');
+      }
+
+      toggleBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!player || typeof player.pauseVideo !== 'function') return;
+
+        if (playing) {
+          player.pauseVideo();
+          setPlayingState(false);
+          return;
+        }
+
+        player.playVideo();
+        enableSound();
+        setPlayingState(true);
+      });
+
+      setPlayingState(playing);
+
+      document.addEventListener('pointerdown', function (event) {
+        if (event.target === toggleBtn) return;
+        enableSound();
+      }, { once: true });
+
+      var tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+
+      window.onYouTubeIframeAPIReady = function () {
+        player = new YT.Player('yt-player', {
+          height: '1',
+          width: '1',
+          videoId: VIDEO_ID,
+          playerVars: {
+            autoplay: 1,
+            loop: 1,
+            playlist: VIDEO_ID,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            rel: 0,
+            iv_load_policy: 3,
+            origin: window.location.origin
+          },
+          events: {
+            onReady: function (event) {
+              var canPlayWithSound = navigator.userActivation
+                && (navigator.userActivation.isActive || navigator.userActivation.hasBeenActive);
+
+              if (!unmuted && !canPlayWithSound) event.target.mute();
+              if (playing) {
+                event.target.playVideo();
+                if (unmuted || canPlayWithSound) enableSound();
+              } else {
+                event.target.pauseVideo();
+              }
+            }
+          }
+        });
+      };
+    })();
+  </script>
 
   <script>
     (function () {
