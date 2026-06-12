@@ -23,11 +23,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Assemble published site (EmailsForms only)
+        run: |
+          mkdir -p _publish/EmailsForms
+          cp CNAME .nojekyll _publish/
+          cp -r EmailsForms/. _publish/EmailsForms/
+          cp publish-index.html _publish/index.html
+          cp publish-404.html _publish/404.html
+          cp robots.txt sitemap.xml _publish/
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _publish
 
       - id: deployment
         uses: actions/deploy-pages@v4

@@ -1,13 +1,11 @@
-# robots.txt — gluerecords.club
-# https://www.robotstxt.org/
+# gluerecords.club — only EmailsForms/splash is public
 
 User-agent: *
-Allow: /
+Disallow: /
+Allow: /EmailsForms/
 
-# Point crawlers to the sitemap
 Sitemap: https://gluerecords.club/sitemap.xml
 
-# Block AI training crawlers (optional but common for artist sites)
 User-agent: GPTBot
 Disallow: /
 
