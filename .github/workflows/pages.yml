@@ -26,11 +26,16 @@ jobs:
       - name: Assemble published site (EmailsForms only)
         run: |
           mkdir -p _publish/EmailsForms
-          cp CNAME .nojekyll _publish/
-          cp -r EmailsForms/. _publish/EmailsForms/
-          cp publish-index.html _publish/index.html
-          cp publish-404.html _publish/404.html
+          cp CNAME _publish/CNAME
+          cp .nojekyll _publish/.nojekyll
+          cp -R EmailsForms/* _publish/EmailsForms/
+          cp index.html _publish/index.html
+          cp 404.html _publish/404.html
           cp robots.txt sitemap.xml _publish/
+          echo "Published files:"
+          find _publish -type f | sort
+          test -f _publish/index.html
+          test -f _publish/EmailsForms/index.html
 
       - uses: actions/configure-pages@v5
 
