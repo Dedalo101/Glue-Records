@@ -93,6 +93,12 @@
     },
     {
       "@type": "MusicGroup",
+      "name": "Edomite",
+      "url": "https://edomite.club",
+      "genre": ["Techno", "Underground", "Electronic", "Desert Techno"]
+    },
+    {
+      "@type": "MusicGroup",
       "name": "Amoro",
       "url": "https://amoro.club",
       "genre": ["Electronic", "Experimental"]
@@ -114,12 +120,6 @@
       "name": "Breaking Robots",
       "url": "https://breakingrobots.com",
       "genre": ["Glitch", "Noise", "Experimental Electronic"]
-    },
-    {
-      "@type": "MusicGroup",
-      "name": "Edomite",
-      "url": "https://edomite.club",
-      "genre": ["Techno", "Underground", "Electronic", "Desert Techno"]
     },
     {
       "@type": "MusicGroup",
@@ -316,6 +316,35 @@ html, body {
   text-shadow: 0 0 10px var(--cyan);
 }
 .tile:hover a.link span { opacity: .7; }
+
+/* Edomite tile — rust/desert aesthetic matching edomite.club */
+#t-edomite { background: #060302; }
+#t-edomite .tile-name {
+  text-shadow:
+    -2px 0 0 rgba(180,50,10,.45),
+     2px 0 0 rgba(200,120,40,.25),
+     0 0 80px rgba(180,60,10,.18),
+     0 0 30px rgba(0,0,0,.9);
+  animation: edomiteGlitch 9s infinite;
+}
+#t-edomite .tile-sub {
+  color: rgba(201,169,110,.5);
+  letter-spacing: .5em;
+}
+#t-edomite:hover::before { border-color: rgba(184,74,30,.28); }
+#t-edomite a.link span {
+  color: #b84a1e;
+  text-shadow: 0 0 10px rgba(184,74,30,.55);
+}
+@keyframes edomiteGlitch {
+  0%,92%,100% { clip-path: none; transform: none; }
+  93%  { clip-path: inset(20% 0 55% 0); transform: translate(-3px,0); }
+  94%  { clip-path: inset(65% 0  8% 0); transform: translate( 3px,0); }
+  95%  { clip-path: none; transform: none; }
+  97%  { clip-path: inset( 8% 0 75% 0); transform: translate(-1px,0); }
+  97.5%{ clip-path: none; transform: none; }
+}
+
 /* tile hover border flash */
 .tile::before {
   content: '';
@@ -413,6 +442,16 @@ footer a svg { width: 17px; height: 17px; fill: currentColor; }
     <a class="link" href="https://nahuel.club" target="_blank" rel="noopener"><span>visit ↗</span></a>
   </div>
 
+  <!-- EDOMITE -->
+  <div class="tile" id="t-edomite">
+    <canvas id="c-edomite"></canvas>
+    <div class="tile-info">
+      <span class="tile-name">Edomite</span>
+      <span class="tile-sub">Red Land · Dust · Bass</span>
+    </div>
+    <a class="link" href="https://edomite.club" target="_blank" rel="noopener"><span>visit ↗</span></a>
+  </div>
+
   <!-- AMORO -->
   <div class="tile" id="t-amoro">
     <canvas id="c-amoro"></canvas>
@@ -451,16 +490,6 @@ footer a svg { width: 17px; height: 17px; fill: currentColor; }
       <span class="tile-sub">Glitch · Noise · Chaos</span>
     </div>
     <a class="link" href="https://breakingrobots.com" target="_blank" rel="noopener"><span>visit ↗</span></a>
-  </div>
-
-  <!-- EDOMITE -->
-  <div class="tile" id="t-edomite">
-    <canvas id="c-edomite"></canvas>
-    <div class="tile-info">
-      <span class="tile-name">Edomite</span>
-      <span class="tile-sub">Red Land · Dust · Bass</span>
-    </div>
-    <a class="link" href="https://edomite.club" target="_blank" rel="noopener"><span>visit ↗</span></a>
   </div>
 
   <!-- DJ HOPPI -->
@@ -525,6 +554,16 @@ footer a svg { width: 17px; height: 17px; fill: currentColor; }
   </article>
 
   <article>
+    <h3>Edomite</h3>
+    <p>
+      Edomite es un DJ y productor de techno underground residente de Glue Records en Málaga.
+      Edomite is an underground techno DJ and producer, resident artist of Glue Records in Málaga, Spain.
+      Techno, desert bass, hypnotic, dark, electronic.
+      Sitio web: <a href="https://edomite.club">edomite.club</a>
+    </p>
+  </article>
+
+  <article>
     <h3>Amoro</h3>
     <p>
       Amoro es un artista de música electrónica experimental.
@@ -561,16 +600,6 @@ footer a svg { width: 17px; height: 17px; fill: currentColor; }
       Breaking Robots is a glitch, noise and experimental electronic music project.
       Glitch, noise, chaos, experimental, industrial electronics.
       Sitio web: <a href="https://breakingrobots.com">breakingrobots.com</a>
-    </p>
-  </article>
-
-  <article>
-    <h3>Edomite</h3>
-    <p>
-      Edomite es un DJ y productor de techno underground residente de Glue Records en Málaga.
-      Edomite is an underground techno DJ and producer, resident artist of Glue Records in Málaga, Spain.
-      Techno, desert bass, hypnotic, dark, electronic.
-      Sitio web: <a href="https://edomite.club">edomite.club</a>
     </p>
   </article>
 
@@ -1409,16 +1438,15 @@ const isMobile = () => window.innerWidth < 600;
 
 
 /* ═══════════════════════════════════════════════
-   EDOMITE — Desert dust particles + rust gravity
-   Dark field, red/sand particles pulled toward
-   interaction point (tile hover + global PTR).
-   Scanlines + faint central star glyph.
+   EDOMITE — Port of edomite.club desert particle field
+   Rust/sand HSL particles, scanlines, star glyph,
+   hover sparks. Matches edomite.club visual language.
 ═══════════════════════════════════════════════ */
 (function(){
   const cv = document.getElementById("c-edomite");
   const ctx = cv.getContext("2d");
   const tile = document.getElementById("t-edomite");
-  let W=0, H=0, t=0, parts=[];
+  let W=0, H=0, t=0, parts=[], sparks=[];
   let hovered = false, lx=.5, ly=.5;
 
   tile.addEventListener("mouseenter", ()=>{hovered=true;},{passive:true});
@@ -1426,16 +1454,35 @@ const isMobile = () => window.innerWidth < 600;
   tile.addEventListener("mousemove", e=>{
     const r=tile.getBoundingClientRect();
     lx=(e.clientX-r.left)/r.width; ly=(e.clientY-r.top)/r.height;
+    if (Math.random() < .12) spawnSpark(e.clientX-r.left, e.clientY-r.top);
   },{passive:true});
   tile.addEventListener("touchmove", e=>{
     const r=tile.getBoundingClientRect();
     lx=(e.touches[0].clientX-r.left)/r.width; ly=(e.touches[0].clientY-r.top)/r.height;
   },{passive:true});
 
-  function init(n=72){
-    parts=[];
-    for(let i=0;i<n;i++){
-      parts.push({x:Math.random(), y:Math.random(), vx:(Math.random()-.5)*.0015, vy:(Math.random()-.5)*.0015, s:.7+Math.random()*1.6});
+  function makePart(full){
+    const hue = 18 + Math.random()*22, sat = 55 + Math.random()*30, lum = 38 + Math.random()*32;
+    return {
+      x: Math.random(), y: full ? Math.random() : -0.05,
+      vx: (Math.random()-.5)*.0012, vy: .0008 + Math.random()*.0018,
+      s: .6 + Math.random()*2.1, hue, sat, lum,
+      alpha: .2 + Math.random()*.4, wave: Math.random()*Math.PI*2
+    };
+  }
+  function init(n=110){
+    parts = Array.from({length:n}, ()=>makePart(true));
+  }
+  function spawnSpark(cx, cy){
+    const dpr = Math.min(window.devicePixelRatio||1,2);
+    for (let k=0; k<4; k++){
+      const ang = Math.random()*Math.PI*2, spd = .8 + Math.random()*2.2;
+      sparks.push({
+        x: cx*dpr, y: cy*dpr,
+        vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd*.8 - .3,
+        life: 8 + Math.random()*14, size: .7 + Math.random()*1.4,
+        hue: 2 + Math.random()*12
+      });
     }
   }
   function fit(){
@@ -1450,34 +1497,49 @@ const isMobile = () => window.innerWidth < 600;
     if(fit() || !W){ W=cv.width; H=cv.height; }
     ctx.fillStyle="#060302"; ctx.fillRect(0,0,W,H);
 
-    const gx = (PTR ? PTR.nx : 0) * .2;
-    const px = lx*W + gx*W, py=ly*H;
+    const gx = (PTR ? PTR.nx : 0) * .18;
+    const px = lx*W + gx*W*.5, py=ly*H;
 
-    for(let p of parts){
-      const dx = px - p.x*W, dy=py - p.y*H;
+    for (const p of parts){
+      const dx = px - p.x*W, dy = py - p.y*H;
       const d = Math.hypot(dx,dy)||1;
-      const f = (hovered? .0022 : .0011) / (0.6 + d/(W*.6));
+      const f = (hovered ? .0026 : .0012) / (0.55 + d/(W*.55));
       p.vx += dx/d * f; p.vy += dy/d * f;
-      p.x += p.vx + (Math.sin(t*1.7 + p.x)*.0004);
-      p.y += p.vy;
-      p.vx *= .965; p.vy *= .965;
-      if(p.x<-.05||p.x>1.05||p.y<-.05||p.y>1.05){ p.x=Math.random(); p.y=Math.random()-.1; p.vx=(Math.random()-.5)*.002; p.vy=.001+Math.random()*.001; }
-      const x=p.x*W, y=p.y*H;
-      ctx.beginPath(); ctx.arc(x,y,p.s*(hovered?1.15:1),0,Math.PI*2);
-      ctx.fillStyle = hovered ? "#b84a1e" : "#c9a96e";
+      p.x += p.vx + Math.sin(t*1.7 + p.wave)*.00035;
+      p.y += p.vy + Math.sin(t*.9 + p.wave)*.0002;
+      p.vx *= .962; p.vy *= .962;
+      if(p.x<-.06||p.x>1.06||p.y>1.06){
+        Object.assign(p, makePart(false));
+      }
+      const x=p.x*W, y=p.y*H, glow = hovered ? 1.2 : 1;
+      ctx.beginPath(); ctx.arc(x,y,p.s*glow,0,Math.PI*2);
+      ctx.fillStyle = `hsla(${p.hue},${p.sat}%,${p.lum}%,${p.alpha})`;
       ctx.fill();
     }
-    // scanlines
-    ctx.fillStyle="rgba(0,0,0,.15)";
+
+    for (let i=sparks.length-1; i>=0; i--){
+      const s=sparks[i];
+      s.x+=s.vx; s.y+=s.vy; s.vy+=.06; s.life--;
+      if(s.life<=0){ sparks.splice(i,1); continue; }
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.size,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${s.hue},96%,62%,${s.life/22})`; ctx.fill();
+    }
+
+    ctx.fillStyle="rgba(0,0,0,.13)";
     for(let y=1;y<H;y+=2) ctx.fillRect(0,y,W,1);
-    // central star / signal
-    const cx=W*.5, cy=H*.5, pulse = 2.5 + Math.sin(t*4)*1.2;
+
+    const cx=W*.5, cy=H*.5, pulse = 2.2 + Math.sin(t*4)*1.4;
     ctx.beginPath(); ctx.arc(cx,cy,pulse,0,Math.PI*2);
-    ctx.fillStyle="rgba(184,74,30,.55)"; ctx.fill();
-    // cross rays
-    ctx.strokeStyle="rgba(201,169,110,.35)"; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(cx-pulse*2.2,cy); ctx.lineTo(cx+pulse*2.2,cy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx,cy-pulse*1.6); ctx.lineTo(cx,cy+pulse*1.6); ctx.stroke();
+    ctx.fillStyle="rgba(184,74,30,.5)"; ctx.fill();
+    ctx.strokeStyle="rgba(201,169,110,.38)"; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx-pulse*2.4,cy); ctx.lineTo(cx+pulse*2.4,cy);
+    ctx.moveTo(cx,cy-pulse*1.7); ctx.lineTo(cx,cy+pulse*1.7); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx,cy-pulse*2.2); ctx.lineTo(cx+pulse*.7,cy-pulse*.7);
+    ctx.lineTo(cx+pulse*2.2,cy); ctx.lineTo(cx+pulse*.7,cy+pulse*.7);
+    ctx.lineTo(cx,cy+pulse*2.2); ctx.lineTo(cx-pulse*.7,cy+pulse*.7);
+    ctx.lineTo(cx-pulse*2.2,cy); ctx.lineTo(cx-pulse*.7,cy-pulse*.7);
+    ctx.closePath(); ctx.stroke();
 
     t += .022;
   }

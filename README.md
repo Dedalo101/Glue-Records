@@ -13,11 +13,11 @@ This is where the glue is applied.
 | Artist | Site | Genre |
 |---|---|---|
 | Nahuel | [nahuel.club](https://nahuel.club) | Techno · Analog · Mix-media Sculpture |
+| Edomite | [edomite.club](https://edomite.club) | Techno · Underground · Desert Bass |
 | Amoro | [amoro.club](https://amoro.club) | Electronic · Techno |
 | Kamaleonica | [kamaleonica.com](https://kamaleonica.com) | Techno · Cosmic |
 | Benny Yasoto | [bennyasoto.com](https://bennyasoto.com) | Hard Techno · Raw · Industrial |
 | Breaking Robots | [breakingrobots.com](https://breakingrobots.com) | Glitch · Noise · Experimental |
-| Edomite | [edomite.club](https://edomite.club) | Techno · Underground · Desert Bass |
 | DJ Hoppi | [djhoppi.club](https://djhoppi.club) | Techno · Electronic |
 | Prisss | [prisss.com](https://prisss.com) | Techno · Electronic · Selector |
 
