@@ -336,6 +336,26 @@ html, body {
   color: #b84a1e;
   text-shadow: 0 0 10px rgba(184,74,30,.55);
 }
+
+/* Prisss tile — warm groove/copper palette matching prisss.com */
+#t-prisss { background: #06050a; }
+#t-prisss .tile-name {
+  color: #ede4d0;
+  text-shadow:
+    0 0 24px rgba(201,122,58,.35),
+    0 0 48px rgba(196,170,126,.15),
+    0 0 30px rgba(0,0,0,.9);
+}
+#t-prisss .tile-sub {
+  color: rgba(196,170,126,.5);
+  letter-spacing: .42em;
+}
+#t-prisss:hover::before { border-color: rgba(201,122,58,.22); }
+#t-prisss a.link span {
+  color: #c97a3a;
+  text-shadow: 0 0 10px rgba(201,122,58,.45);
+}
+
 @keyframes edomiteGlitch {
   0%,92%,100% { clip-path: none; transform: none; }
   93%  { clip-path: inset(20% 0 55% 0); transform: translate(-3px,0); }
@@ -1753,249 +1773,232 @@ const isMobile = () => window.innerWidth < 600;
 
 
 /* ═══════════════════════════════════════════════
-   PRISSS (NATASHA) — Barcelona underground techno
-   Selector · Live Sets · Performer · Est. 2019
-   "Patterns inside groove" — infinite, precise,
-   warm violet/white on deep black.
-
-   Visual concept: a living Julia set that breathes
-   with the groove — mouse sculpts the fractal in
-   real time. Overlaid: sparse binary groove-text
-   rising from the bottom like breath. A soft violet
-   aureole pulses at the mathematical centre.
-   On click: the Julia c-parameter snaps to a new
-   curated attractor (5 beautiful sets, Natasha's
-   "infinite patterns"). Glitch is subtle — a brief
-   horizontal shimmer, not destruction.
-   MOVE TO INTERACT. CLICK TO SHIFT THE PATTERN.
+   PRISSS — Port of prisss.com/js/visuals.js
+   Groove rings · Lissajous attractors · warm
+   copper particles · needle glow · spiral ghost.
 ═══════════════════════════════════════════════ */
 (function(){
   const cv = document.getElementById('c-prisss');
   const ctx = cv.getContext('2d');
   const tile = document.getElementById('t-prisss');
-  let W, H;
-  let mouseX = 0.5, mouseY = 0.5;
-  // Smooth mouse — lerped
-  let smX = 0.5, smY = 0.5;
-  let time = 0, lastTS = null;
+  let W = 0, H = 0, t = 0;
+  let mouseX = 0, mouseY = 0;
 
-  // 5 curated Julia attractors — each one a different "infinite pattern"
-  // chosen for their beauty: spirals, dendrites, rabbit, douady, siegel
-  const ATTRACTORS = [
-    { cX: -0.7269,  cY:  0.1889 },  // 0 — Siegel disk: spiralling rings
-    { cX: -0.4,     cY:  0.6    },  // 1 — Dendrite: branching lightning
-    { cX:  0.285,   cY:  0.01   },  // 2 — Douady rabbit: baroque loops
-    { cX: -0.835,   cY: -0.2321 },  // 3 — San Marco: layered petals
-    { cX: -0.70176, cY: -0.3842 },  // 4 — Seahorse valley
-  ];
-  let attrIdx = 0;
-  // Target and current c — interpolated smoothly between clicks
-  let curC  = { ...ATTRACTORS[0] };
-  let targC = { ...ATTRACTORS[0] };
+  const C = {
+    groove: [196,170,126],
+    needle: [237,228,208],
+    copper: [201,122, 58],
+    ember:  [180, 90, 30],
+  };
+  const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
 
-  // Reusable pixel buffer
-  let imgBuf = null;
+  let grooves = [], attractors = [], parts = [];
+  let ringCount = 0, partCount = 0;
 
-  // Glitch state
-  let glitchEnd = 0;
+  function setMouseFromEvent(e, touch) {
+    const r = tile.getBoundingClientRect();
+    const cx = touch ? e.touches[0].clientX : e.clientX;
+    const cy = touch ? e.touches[0].clientY : e.clientY;
+    mouseX = (cx - r.left) * (W / r.width);
+    mouseY = (cy - r.top) * (H / r.height);
+  }
+  tile.addEventListener('mousemove', e => setMouseFromEvent(e, false), {passive:true});
+  tile.addEventListener('touchmove', e => setMouseFromEvent(e, true), {passive:true});
+  tile.addEventListener('mouseenter', e => setMouseFromEvent(e, false), {passive:true});
 
-  // Groove words — Natasha's language
-  const GROOVE_WORDS = [
-    'SELECTOR','INFINITE','PATTERN','GROOVE','TECHNO',
-    'BARCELONA','LIVE','INSIDE','LOOP','UNDERGROUND',
-    '2019','PRISSS','010101','MOVE','INTERACT'
-  ];
+  function initGrooves() {
+    ringCount = isMobile() ? 36 : Math.min(52, 28 + Math.floor(Math.min(W, H) / 14));
+    grooves = Array.from({length: ringCount}, (_, i) => ({
+      i,
+      phase: (i / ringCount) * Math.PI * 2 + Math.random() * 0.4,
+      thick: i % 9 === 0 ? 1.1 : (i % 3 === 0 ? 0.6 : 0.3),
+      opacity: 0.03 + (i / ringCount) * 0.065,
+    }));
+  }
 
-  // Each word is a particle rising from the bottom
-  let grooveParticles = [];
-  function seedGroove() {
-    grooveParticles = [];
-    const n = 8 + Math.floor(W / 80);
-    for (let i = 0; i < n; i++) {
-      grooveParticles.push({
-        word: GROOVE_WORDS[Math.floor(Math.random() * GROOVE_WORDS.length)],
-        x: Math.random() * W,
-        y: H * (0.2 + Math.random() * 0.9),
-        speed: 0.12 + Math.random() * 0.22,
-        alpha: 0.04 + Math.random() * 0.12,
-        size: 7 + Math.floor(Math.random() * 7),
-        phase: Math.random() * Math.PI * 2,
-      });
+  function initAttractors() {
+    const mh = Math.min(W, H);
+    const specs = [
+      [3, 2, 1.5, 0.26, 0.6],
+      [5, 4, 0.9, 0.19, 0.45],
+      [2, 3, 0.35, 0.28, 0.8],
+    ];
+    attractors = specs.map(([a, b, d, sc, speed]) => ({
+      a, b, d, speed,
+      scale: mh * sc,
+      t: Math.random() * Math.PI * 2,
+      cx: 0.38 + Math.random() * 0.24,
+      cy: 0.38 + Math.random() * 0.24,
+      alpha: 0.03 + Math.random() * 0.035,
+      col: Math.random() < 0.5 ? C.copper : C.groove,
+    }));
+  }
+
+  function mkParticle() {
+    const angle = Math.random() * Math.PI * 2;
+    const orb = 40 + Math.random() * Math.min(W, H) * 0.44;
+    const isCopper = Math.random() < 0.12;
+    return {
+      x: orb * Math.cos(angle) + W / 2,
+      y: orb * Math.sin(angle) + H / 2,
+      vx: 0, vy: 0,
+      angle, orb,
+      drift: (Math.random() - 0.5) * 0.0018,
+      speed: Math.random() * 0.35 + 0.08,
+      size: Math.random() * 1.1 + 0.3,
+      alpha: Math.random() * 0.45 + 0.12,
+      col: isCopper ? C.copper : (Math.random() < 0.2 ? C.needle : C.groove),
+    };
+  }
+
+  function rebuild() {
+    partCount = isMobile() ? 48 : Math.min(72, 32 + Math.floor((W * H) / 12000));
+    initGrooves();
+    initAttractors();
+    parts = Array.from({length: partCount}, mkParticle);
+    mouseX = W / 2;
+    mouseY = H / 2;
+    ctx.fillStyle = '#06050a';
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawGrooves(time) {
+    const cx = W / 2, cy = H / 2;
+    const maxR = Math.min(W, H) * 0.47;
+    const minR = Math.min(W, H) * 0.03;
+    const mdx = (mouseX - cx) / W;
+    const mdy = (mouseY - cy) / H;
+
+    for (const g of grooves) {
+      const base = minR + (maxR - minR) * (g.i / ringCount);
+      const r = base + Math.sin(time * 0.28 + g.phase) * base * 0.012;
+      const ex = cx + mdx * (g.i / ringCount) * 22;
+      const ey = cy + mdy * (g.i / ringCount) * 16;
+
+      ctx.beginPath();
+      for (let s = 0; s <= 120; s++) {
+        const a = (s / 120) * Math.PI * 2;
+        const px = ex + Math.cos(a) * r;
+        const py = ey + Math.sin(a) * r;
+        s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+
+      const dToCenter = Math.hypot(mouseX - cx, mouseY - cy);
+      const nearThis = Math.abs(dToCenter - r) < 12;
+      ctx.strokeStyle = nearThis ? rgba(C.copper, g.opacity * 4.2) : rgba(C.groove, g.opacity);
+      ctx.lineWidth = nearThis ? g.thick * 2 : g.thick;
+      ctx.stroke();
+    }
+
+    ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+    ctx.fillStyle = rgba(C.groove, 0.4); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 1.2, 0, Math.PI * 2);
+    ctx.fillStyle = rgba(C.needle, 0.75); ctx.fill();
+  }
+
+  function drawAttractors(time) {
+    for (const a of attractors) {
+      const ox = a.cx * W, oy = a.cy * H;
+      ctx.beginPath();
+      for (let i = 0; i <= 280; i++) {
+        const u = (i / 280) * Math.PI * 2;
+        const x = ox + Math.sin(a.a * u + a.d + time * a.speed * 0.18) * a.scale;
+        const y = oy + Math.sin(a.b * u) * a.scale * 0.62;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = rgba(a.col, a.alpha);
+      ctx.lineWidth = 0.55;
+      ctx.stroke();
     }
   }
 
-  tile.addEventListener('mousemove', e => {
-    const r = tile.getBoundingClientRect();
-    mouseX = (e.clientX - r.left) / r.width;
-    mouseY = (e.clientY - r.top) / r.height;
-  }, {passive:true});
-  tile.addEventListener('touchmove', e => {
-    const r = tile.getBoundingClientRect();
-    mouseX = (e.touches[0].clientX - r.left) / r.width;
-    mouseY = (e.touches[0].clientY - r.top) / r.height;
-  }, {passive:true});
+  function drawParticles(time) {
+    const cx = W / 2, cy = H / 2;
+    for (const p of parts) {
+      p.angle += p.drift + p.speed * 0.003;
+      p.orb += Math.sin(time + p.angle) * 0.14;
+      const tx = cx + Math.cos(p.angle) * p.orb;
+      const ty = cy + Math.sin(p.angle) * p.orb;
+      const dM = Math.hypot(mouseX - tx, mouseY - ty);
+      const rep = Math.max(0, 120 - dM) / 120;
+      const fx = (tx - mouseX) / (dM || 1) * rep * 55;
+      const fy = (ty - mouseY) / (dM || 1) * rep * 55;
+      p.vx += ((tx + fx) - p.x) * 0.045;
+      p.vy += ((ty + fy) - p.y) * 0.045;
+      p.vx *= 0.87; p.vy *= 0.87;
+      p.x += p.vx; p.y += p.vy;
 
-  tile.addEventListener('click', () => {
-    attrIdx = (attrIdx + 1) % ATTRACTORS.length;
-    targC = { ...ATTRACTORS[attrIdx] };
-    // Brief glitch shimmer on pattern shift
-    glitchEnd = performance.now() + 280;
-  });
-  tile.addEventListener('touchend', () => {
-    attrIdx = (attrIdx + 1) % ATTRACTORS.length;
-    targC = { ...ATTRACTORS[attrIdx] };
-    glitchEnd = performance.now() + 280;
-  });
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(p.col, p.alpha);
+      ctx.fill();
+    }
 
-  // Draw the Julia set into pixel buffer
-  // Violet tint: R=v*0.55, G=v*0.3, B=v — white at high iteration
-  function drawJulia(cX, cY) {
-    if (!imgBuf || imgBuf.width !== W || imgBuf.height !== H)
-      imgBuf = ctx.createImageData(W, H);
-    const d = imgBuf.data;
-    d.fill(0);
-
-    const step = isMobile() ? 5 : (W < 900 ? 4 : 3);
-    const maxIter = isMobile() ? 32 : 48;
-    // zoom breathing gently with time
-    const zoom = 1.18 + 0.06 * Math.sin(time * 0.4);
-
-    for (let px = 0; px < W; px += step) {
-      for (let py = 0; py < H; py += step) {
-        let x = (px + step * 0.5 - W / 2) / (0.42 * zoom * Math.min(W, H));
-        let y = (py + step * 0.5 - H / 2) / (0.42 * zoom * Math.min(W, H));
-        let iter = 0;
-        while (x*x + y*y <= 4 && iter < maxIter) {
-          const xt = x*x - y*y + cX;
-          y = 2*x*y + cY; x = xt; iter++;
-        }
-        if (iter < maxIter) {
-          // Smooth colouring
-          const smooth = iter + 1 - Math.log(Math.log(Math.sqrt(x*x+y*y))) / Math.log(2);
-          const t2 = smooth / maxIter;
-          // Violet–white palette: dark purple → bright violet → near-white
-          const r2 = Math.floor(t2 * t2 * 255 * 0.9);
-          const g2 = Math.floor(t2 * 160 * t2);
-          const b2 = Math.floor(t2 * 255);
-          const a2 = 140 + Math.floor(t2 * 110);
-          for (let dx = 0; dx < step && px+dx < W; dx++) {
-            for (let dy = 0; dy < step && py+dy < H; dy++) {
-              const i = ((py+dy) * W + (px+dx)) * 4;
-              d[i]=r2; d[i+1]=g2; d[i+2]=b2; d[i+3]=a2;
-            }
-          }
+    ctx.lineWidth = 0.25;
+    for (let i = 0; i < parts.length; i += 2) {
+      for (let j = i + 1; j < parts.length; j += 2) {
+        const dx = parts[i].x - parts[j].x;
+        const dy = parts[i].y - parts[j].y;
+        const d = Math.hypot(dx, dy);
+        if (d < 70) {
+          ctx.strokeStyle = rgba(C.groove, (1 - d / 70) * 0.1);
+          ctx.beginPath();
+          ctx.moveTo(parts[i].x, parts[i].y);
+          ctx.lineTo(parts[j].x, parts[j].y);
+          ctx.stroke();
         }
       }
     }
-    ctx.putImageData(imgBuf, 0, 0);
   }
 
-  // Violet centre pulse — mathematical heart of the attractor
-  function drawCentrePulse() {
-    const cx = W/2, cy = H/2;
-    const pulse = 0.65 + 0.35 * Math.sin(time * 1.8);
-    for (let ring = 3; ring >= 0; ring--) {
-      const r = (18 + ring * 22) * pulse;
-      const al = (0.18 - ring * 0.04) * pulse;
-      const g = ctx.createRadialGradient(cx,cy,0,cx,cy,r);
-      g.addColorStop(0, `rgba(180,100,255,${al.toFixed(3)})`);
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(cx-r, cy-r, r*2, r*2);
+  function drawGlow() {
+    const g = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 70);
+    g.addColorStop(0, rgba(C.needle, 0.12));
+    g.addColorStop(0.4, rgba(C.copper, 0.05));
+    g.addColorStop(1, rgba(C.groove, 0));
+    ctx.beginPath(); ctx.arc(mouseX, mouseY, 70, 0, Math.PI * 2);
+    ctx.fillStyle = g; ctx.fill();
+  }
+
+  function drawSpiralGhost(time) {
+    const cx = W / 2, cy = H / 2;
+    const maxR = Math.min(W, H) * 0.47;
+    ctx.beginPath();
+    for (let s = 0; s <= 500; s++) {
+      const frac = s / 500;
+      const theta = frac * 7 * Math.PI * 2 + time * 0.04;
+      const r = frac * maxR;
+      const x = cx + Math.cos(theta) * r;
+      const y = cy + Math.sin(theta) * r;
+      s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
-    // bindu dot
-    ctx.beginPath(); ctx.arc(cx, cy, 2.5 * pulse, 0, Math.PI*2);
-    ctx.fillStyle = `rgba(220,170,255,${(0.9*pulse).toFixed(2)})`;
-    ctx.fill();
+    ctx.strokeStyle = rgba(C.ember, 0.02);
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
   }
 
-  // Rising groove text particles
-  function drawGroove() {
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    for (const p of grooveParticles) {
-      p.y -= p.speed;
-      if (p.y < -20) {
-        p.y = H + 10;
-        p.x = Math.random() * W;
-        p.word = GROOVE_WORDS[Math.floor(Math.random() * GROOVE_WORDS.length)];
-      }
-      const wobble = Math.sin(time * 0.8 + p.phase) * 2;
-      ctx.font = `${p.size}px 'Share Tech Mono',monospace`;
-      ctx.fillStyle = `rgba(200,150,255,${p.alpha.toFixed(3)})`;
-      ctx.fillText(p.word, p.x + wobble, p.y);
-    }
-  }
-
-  // Subtle glitch shimmer — a few horizontal bands shift slightly
-  function drawGlitch(intensity) {
-    const n = Math.floor(2 + intensity * 6);
-    for (let i = 0; i < n; i++) {
-      const y = Math.random() * H;
-      const h = 1 + Math.random() * 5;
-      const shift = (Math.random() - 0.5) * 18 * intensity;
-      try {
-        const sl = ctx.getImageData(0, y, W, h);
-        ctx.putImageData(sl, shift, y);
-      } catch(e) { /* ignore */ }
-      // violet shimmer line
-      ctx.fillStyle = `rgba(160,80,255,${(0.08 * intensity).toFixed(3)})`;
-      ctx.fillRect(0, y, W, h);
-    }
-  }
-
-  // Attractor name watermark
-  const ATTR_NAMES = ['SIEGEL','DENDRITE','RABBIT','SAN MARCO','SEAHORSE'];
-
-  function draw(ts) {
+  let needsRebuild = true;
+  function draw() {
     requestAnimationFrame(draw);
-    if (!lastTS) lastTS = ts;
-    const delta = Math.min(ts - lastTS, 80); lastTS = ts;
-    time += delta * 0.001;
-
-    fitTile(cv); W = cv.width; H = cv.height;
+    if (fitTile(cv)) needsRebuild = true;
+    W = cv.width; H = cv.height;
     if (W < 2 || H < 2) return;
-    if (!grooveParticles.length) seedGroove();
+    if (needsRebuild) { rebuild(); needsRebuild = false; }
 
-    // Smooth mouse lerp
-    smX += (mouseX - smX) * 0.04;
-    smY += (mouseY - smY) * 0.04;
-
-    // Smooth c interpolation — mouse bends the attractor gently
-    const targetCX = targC.cX + (smX - 0.5) * 0.08;
-    const targetCY = targC.cY + (smY - 0.5) * 0.08;
-    curC.cX += (targetCX - curC.cX) * 0.025;
-    curC.cY += (targetCY - curC.cY) * 0.025;
-
-    // Black background — clean wipe each frame (Julia is redrawn fully)
-    ctx.fillStyle = '#000';
+    t += 0.009;
+    ctx.fillStyle = 'rgba(6,5,10,0.22)';
     ctx.fillRect(0, 0, W, H);
 
-    // Julia set — main visual
-    drawJulia(curC.cX, curC.cY);
-
-    // Violet centre pulse over the fractal
-    drawCentrePulse();
-
-    // Rising groove words
-    drawGroove();
-
-    // Glitch on pattern shift
-    const now = performance.now();
-    if (now < glitchEnd) {
-      drawGlitch((glitchEnd - now) / 280);
-    }
-
-    // Attractor name + instruction — very faint, bottom-left
-    ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-    ctx.font = `8px 'Share Tech Mono',monospace`;
-    ctx.fillStyle = 'rgba(180,100,255,0.22)';
-    ctx.fillText(`∞ ${ATTR_NAMES[attrIdx]}`, 10, H - 10);
-    ctx.fillStyle = 'rgba(255,255,255,0.1)';
-    ctx.fillText('MOVE TO INTERACT · CLICK TO SHIFT', 10, H - 22);
+    drawSpiralGhost(t);
+    drawGrooves(t);
+    drawAttractors(t);
+    drawParticles(t);
+    drawGlow();
   }
 
   requestAnimationFrame(draw);
-  window.addEventListener('resize', debounce(() => { grooveParticles = []; imgBuf = null; }, 150), {passive:true});
+  window.addEventListener('resize', debounce(() => { needsRebuild = true; }, 150), {passive:true});
 })();
 </script>
 </body>
