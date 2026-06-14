@@ -1953,6 +1953,7 @@ const isMobile = () => window.innerWidth < 600;
     time += delta * 0.001;
 
     fitTile(cv); W = cv.width; H = cv.height;
+    if (W < 2 || H < 2) return;
     if (!grooveParticles.length) seedGroove();
 
     // Smooth mouse lerp
@@ -1992,6 +1993,9 @@ const isMobile = () => window.innerWidth < 600;
     ctx.fillStyle = 'rgba(255,255,255,0.1)';
     ctx.fillText('MOVE TO INTERACT · CLICK TO SHIFT', 10, H - 22);
   }
+
+  requestAnimationFrame(draw);
+  window.addEventListener('resize', debounce(() => { grooveParticles = []; imgBuf = null; }, 150), {passive:true});
 })();
 </script>
 </body>
